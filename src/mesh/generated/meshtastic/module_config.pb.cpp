@@ -18,6 +18,9 @@ PB_BIND(meshtastic_ModuleConfig_MapReportSettings, meshtastic_ModuleConfig_MapRe
 PB_BIND(meshtastic_ModuleConfig_RemoteHardwareConfig, meshtastic_ModuleConfig_RemoteHardwareConfig, AUTO)
 
 
+PB_BIND(meshtastic_ModuleConfig_KiezboxControlConfig, meshtastic_ModuleConfig_KiezboxControlConfig, AUTO)
+
+
 PB_BIND(meshtastic_ModuleConfig_NeighborInfoConfig, meshtastic_ModuleConfig_NeighborInfoConfig, AUTO)
 
 

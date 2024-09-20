@@ -55,7 +55,8 @@ typedef enum _meshtastic_AdminMessage_ModuleConfigType {
     meshtastic_AdminMessage_ModuleConfigType_CANNEDMSG_CONFIG = 6,
     /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_AUDIO_CONFIG = 7,
-    /* TODO: REPLACE */
+    /* TODO: REPLACE
+ TODO: DO I NEED THIS FOR KIEZBOX? See also other remote hardware stuff in this file */
     meshtastic_AdminMessage_ModuleConfigType_REMOTEHARDWARE_CONFIG = 8,
     /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_NEIGHBORINFO_CONFIG = 9,
