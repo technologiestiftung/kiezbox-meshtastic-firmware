@@ -411,6 +411,17 @@ typedef struct _meshtastic_ModuleConfig_RemoteHardwareConfig {
     meshtastic_RemoteHardwarePin available_pins[4];
 } meshtastic_ModuleConfig_RemoteHardwareConfig;
 
+/* KiezboxControlModule Config */
+typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
+    /* Whether the Module is enabled */
+    bool enabled;
+    /* Whether the Module allows consumers to read / write to pins not defined in available_pins */
+    bool allow_undefined_pin_access;
+    /* Exposes the available pins to the mesh for reading and writing */
+    pb_size_t available_pins_count;
+    meshtastic_RemoteHardwarePin available_pins[4];
+} meshtastic_ModuleConfig_KiezboxControlConfig;
+
 /* Module Config */
 typedef struct _meshtastic_ModuleConfig {
     pb_size_t which_payload_variant;
@@ -441,6 +452,8 @@ typedef struct _meshtastic_ModuleConfig {
         meshtastic_ModuleConfig_DetectionSensorConfig detection_sensor;
         /* TODO: REPLACE */
         meshtastic_ModuleConfig_PaxcounterConfig paxcounter;
+        /* TODO: REPLACE */
+        meshtastic_ModuleConfig_KiezboxControlConfig kiezbox_control;
     } payload_variant;
 } meshtastic_ModuleConfig;
 
@@ -480,6 +493,7 @@ extern "C" {
 
 
 #define meshtastic_ModuleConfig_DetectionSensorConfig_detection_trigger_type_ENUMTYPE meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType
+
 
 #define meshtastic_ModuleConfig_AudioConfig_bitrate_ENUMTYPE meshtastic_ModuleConfig_AudioConfig_Audio_Baud
 
@@ -636,6 +650,9 @@ extern "C" {
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_enabled_tag 1
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_allow_undefined_pin_access_tag 2
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_available_pins_tag 3
+#define meshtastic_ModuleConfig_KiezboxControlConfig_enabled_tag 1
+#define meshtastic_ModuleConfig_KiezboxControlConfig_allow_undefined_pin_access_tag 2
+#define meshtastic_ModuleConfig_KiezboxControlConfig_available_pins_tag 3
 #define meshtastic_ModuleConfig_mqtt_tag         1
 #define meshtastic_ModuleConfig_serial_tag       2
 #define meshtastic_ModuleConfig_external_notification_tag 3
@@ -649,6 +666,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_ambient_lighting_tag 11
 #define meshtastic_ModuleConfig_detection_sensor_tag 12
 #define meshtastic_ModuleConfig_paxcounter_tag   13
+#define meshtastic_ModuleConfig_kiezbox_control_tag 14
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_ModuleConfig_FIELDLIST(X, a) \
@@ -664,7 +682,8 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,remote_hardware,payload_vari
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,neighbor_info,payload_variant.neighbor_info),  10) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,ambient_lighting,payload_variant.ambient_lighting),  11) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,detection_sensor,payload_variant.detection_sensor),  12) \
-X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,paxcounter,payload_variant.paxcounter),  13)
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,paxcounter,payload_variant.paxcounter),  13) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,kiezbox_control,payload_variant.kiezbox_control),  14)
 #define meshtastic_ModuleConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_DEFAULT NULL
 #define meshtastic_ModuleConfig_payload_variant_mqtt_MSGTYPE meshtastic_ModuleConfig_MQTTConfig
@@ -680,6 +699,7 @@ X(a, STATIC,   ONEOF,    MESSAGE,  (payload_variant,paxcounter,payload_variant.p
 #define meshtastic_ModuleConfig_payload_variant_ambient_lighting_MSGTYPE meshtastic_ModuleConfig_AmbientLightingConfig
 #define meshtastic_ModuleConfig_payload_variant_detection_sensor_MSGTYPE meshtastic_ModuleConfig_DetectionSensorConfig
 #define meshtastic_ModuleConfig_payload_variant_paxcounter_MSGTYPE meshtastic_ModuleConfig_PaxcounterConfig
+#define meshtastic_ModuleConfig_payload_variant_kiezbox_control_MSGTYPE meshtastic_ModuleConfig_KiezboxControlConfig
 
 #define meshtastic_ModuleConfig_MQTTConfig_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
@@ -710,6 +730,14 @@ X(a, STATIC,   REPEATED, MESSAGE,  available_pins,    3)
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_DEFAULT NULL
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_available_pins_MSGTYPE meshtastic_RemoteHardwarePin
+
+#define meshtastic_ModuleConfig_KiezboxControlConfig_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
+X(a, STATIC,   SINGULAR, BOOL,     allow_undefined_pin_access,   2) \
+X(a, STATIC,   REPEATED, MESSAGE,  available_pins,    3)
+#define meshtastic_ModuleConfig_KiezboxControlConfig_CALLBACK NULL
+#define meshtastic_ModuleConfig_KiezboxControlConfig_DEFAULT NULL
+#define meshtastic_ModuleConfig_KiezboxControlConfig_available_pins_MSGTYPE meshtastic_RemoteHardwarePin
 
 #define meshtastic_ModuleConfig_NeighborInfoConfig_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
@@ -849,6 +877,7 @@ extern const pb_msgdesc_t meshtastic_ModuleConfig_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_MQTTConfig_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_MapReportSettings_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_RemoteHardwareConfig_msg;
+extern const pb_msgdesc_t meshtastic_ModuleConfig_KiezboxControlConfig_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_NeighborInfoConfig_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_DetectionSensorConfig_msg;
 extern const pb_msgdesc_t meshtastic_ModuleConfig_AudioConfig_msg;
@@ -867,6 +896,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_MQTTConfig_fields &meshtastic_ModuleConfig_MQTTConfig_msg
 #define meshtastic_ModuleConfig_MapReportSettings_fields &meshtastic_ModuleConfig_MapReportSettings_msg
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_fields &meshtastic_ModuleConfig_RemoteHardwareConfig_msg
+#define meshtastic_ModuleConfig_KiezboxControlConfig_fields &meshtastic_ModuleConfig_KiezboxControlConfig_msg
 #define meshtastic_ModuleConfig_NeighborInfoConfig_fields &meshtastic_ModuleConfig_NeighborInfoConfig_msg
 #define meshtastic_ModuleConfig_DetectionSensorConfig_fields &meshtastic_ModuleConfig_DetectionSensorConfig_msg
 #define meshtastic_ModuleConfig_AudioConfig_fields &meshtastic_ModuleConfig_AudioConfig_msg
@@ -887,6 +917,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_CannedMessageConfig_size 49
 #define meshtastic_ModuleConfig_DetectionSensorConfig_size 44
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_size 42
+#define meshtastic_ModuleConfig_KiezboxControlConfig_size 96
 #define meshtastic_ModuleConfig_MQTTConfig_size  254
 #define meshtastic_ModuleConfig_MapReportSettings_size 12
 #define meshtastic_ModuleConfig_NeighborInfoConfig_size 10
