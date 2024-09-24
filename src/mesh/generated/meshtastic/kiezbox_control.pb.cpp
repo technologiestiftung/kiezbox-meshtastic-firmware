@@ -9,5 +9,8 @@
 PB_BIND(meshtastic_KiezboxMessage, meshtastic_KiezboxMessage, AUTO)
 
 
+PB_BIND(meshtastic_KiezboxMessage_KiezboxStatus, meshtastic_KiezboxMessage_KiezboxStatus, AUTO)
+
+
 
 
