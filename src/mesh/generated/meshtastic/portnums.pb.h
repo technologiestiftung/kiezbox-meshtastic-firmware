@@ -133,8 +133,7 @@ typedef enum _meshtastic_PortNum {
     /* ATAK Forwarder Module https://github.com/paulmandal/atak-forwarder
  ENCODING: libcotshrink */
     meshtastic_PortNum_ATAK_FORWARDER = 257,
-    /* Reserved for built-in GPIO/example app.
- See remote_hardware.proto/HardwareMessage for details on the message sent/received to this port number
+    /* Reserved for Kiezbox Control.
  ENCODING: Protobuf */
     meshtastic_PortNum_KIEZBOX_CONTROL_APP = 258,
     /* Currently we limit port nums to no higher than this value */

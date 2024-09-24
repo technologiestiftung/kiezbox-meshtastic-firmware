@@ -55,8 +55,7 @@ typedef enum _meshtastic_AdminMessage_ModuleConfigType {
     meshtastic_AdminMessage_ModuleConfigType_CANNEDMSG_CONFIG = 6,
     /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_AUDIO_CONFIG = 7,
-    /* TODO: REPLACE
- TODO: DO I NEED THIS FOR KIEZBOX? See also other remote hardware stuff in this file */
+    /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_REMOTEHARDWARE_CONFIG = 8,
     /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_NEIGHBORINFO_CONFIG = 9,
@@ -65,7 +64,10 @@ typedef enum _meshtastic_AdminMessage_ModuleConfigType {
     /* TODO: REPLACE */
     meshtastic_AdminMessage_ModuleConfigType_DETECTIONSENSOR_CONFIG = 11,
     /* TODO: REPLACE */
-    meshtastic_AdminMessage_ModuleConfigType_PAXCOUNTER_CONFIG = 12
+    meshtastic_AdminMessage_ModuleConfigType_PAXCOUNTER_CONFIG = 12,
+    /* TODO: REPLACE
+ TODO: Test if this works as expected for new values */
+    meshtastic_AdminMessage_ModuleConfigType_KIEZBOXCONTROL_CONFIG = 13
 } meshtastic_AdminMessage_ModuleConfigType;
 
 /* Struct definitions */
@@ -211,8 +213,8 @@ extern "C" {
 #define _meshtastic_AdminMessage_ConfigType_ARRAYSIZE ((meshtastic_AdminMessage_ConfigType)(meshtastic_AdminMessage_ConfigType_SESSIONKEY_CONFIG+1))
 
 #define _meshtastic_AdminMessage_ModuleConfigType_MIN meshtastic_AdminMessage_ModuleConfigType_MQTT_CONFIG
-#define _meshtastic_AdminMessage_ModuleConfigType_MAX meshtastic_AdminMessage_ModuleConfigType_PAXCOUNTER_CONFIG
-#define _meshtastic_AdminMessage_ModuleConfigType_ARRAYSIZE ((meshtastic_AdminMessage_ModuleConfigType)(meshtastic_AdminMessage_ModuleConfigType_PAXCOUNTER_CONFIG+1))
+#define _meshtastic_AdminMessage_ModuleConfigType_MAX meshtastic_AdminMessage_ModuleConfigType_KIEZBOXCONTROL_CONFIG
+#define _meshtastic_AdminMessage_ModuleConfigType_ARRAYSIZE ((meshtastic_AdminMessage_ModuleConfigType)(meshtastic_AdminMessage_ModuleConfigType_KIEZBOXCONTROL_CONFIG+1))
 
 #define meshtastic_AdminMessage_payload_variant_get_config_request_ENUMTYPE meshtastic_AdminMessage_ConfigType
 #define meshtastic_AdminMessage_payload_variant_get_module_config_request_ENUMTYPE meshtastic_AdminMessage_ModuleConfigType

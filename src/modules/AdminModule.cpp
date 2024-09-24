@@ -620,6 +620,11 @@ void AdminModule::handleSetModuleConfig(const meshtastic_ModuleConfig &c)
         moduleConfig.has_remote_hardware = true;
         moduleConfig.remote_hardware = c.payload_variant.remote_hardware;
         break;
+    case meshtastic_ModuleConfig_kiezbox_control_tag:
+        LOG_INFO("Setting module config: Kiezbox Control\n");
+        moduleConfig.has_kiezbox_control = true;
+        moduleConfig.kiezbox_control = c.payload_variant.kiezbox_control;
+        break;
     case meshtastic_ModuleConfig_neighbor_info_tag:
         LOG_INFO("Setting module config: Neighbor Info\n");
         moduleConfig.has_neighbor_info = true;
@@ -788,6 +793,11 @@ void AdminModule::handleGetModuleConfig(const meshtastic_MeshPacket &req, const 
             LOG_INFO("Getting module config: Remote Hardware\n");
             res.get_module_config_response.which_payload_variant = meshtastic_ModuleConfig_remote_hardware_tag;
             res.get_module_config_response.payload_variant.remote_hardware = moduleConfig.remote_hardware;
+            break;
+        case meshtastic_AdminMessage_ModuleConfigType_KIEZBOXCONTROL_CONFIG:
+            LOG_INFO("Getting module config: Kiezbox Control\n");
+            res.get_module_config_response.which_payload_variant = meshtastic_ModuleConfig_kiezbox_control_tag;
+            res.get_module_config_response.payload_variant.kiezbox_control = moduleConfig.kiezbox_control;
             break;
         case meshtastic_AdminMessage_ModuleConfigType_NEIGHBORINFO_CONFIG:
             LOG_INFO("Getting module config: Neighbor Info\n");

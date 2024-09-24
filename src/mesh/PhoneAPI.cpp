@@ -319,6 +319,10 @@ size_t PhoneAPI::getFromRadio(uint8_t *buf)
             fromRadioScratch.moduleConfig.which_payload_variant = meshtastic_ModuleConfig_remote_hardware_tag;
             fromRadioScratch.moduleConfig.payload_variant.remote_hardware = moduleConfig.remote_hardware;
             break;
+        case meshtastic_ModuleConfig_kiezbox_control_tag:
+            fromRadioScratch.moduleConfig.which_payload_variant = meshtastic_ModuleConfig_kiezbox_control_tag;
+            fromRadioScratch.moduleConfig.payload_variant.kiezbox_control = moduleConfig.kiezbox_control;
+            break;
         case meshtastic_ModuleConfig_neighbor_info_tag:
             fromRadioScratch.moduleConfig.which_payload_variant = meshtastic_ModuleConfig_neighbor_info_tag;
             fromRadioScratch.moduleConfig.payload_variant.neighbor_info = moduleConfig.neighbor_info;
