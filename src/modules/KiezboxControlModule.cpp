@@ -57,7 +57,7 @@ KiezboxControlModule::KiezboxControlModule()
 
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &req, meshtastic_KiezboxMessage *pptr)
 {
-    if (moduleConfig.kiezbox_control.enabled) {
+    if (false) {
         auto p = *pptr;
         LOG_INFO("Received KiezboxControl type=%d\n", p.type);
 
@@ -122,21 +122,22 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &r
 int32_t KiezboxControlModule::runOnce()
 {
     // Broadcast sensor values
-    LOG_DEBUG("Broadcasting Kiezbox Message\n");
-    meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
-    r.has_status = true;
-    // Internal sensors
-    r.status.temperature_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
-    r.status.humidity_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
-    // external sensors
-    dallas.requestTemperatures(); 
-    r.status.temperature_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
-    // mppt measurements
-    // TODO: and maybe convert to hex protocol to recude delay and ressource usage
-    // RTC
-    // TODO: add support and time setting handling
-    meshtastic_MeshPacket *p = allocDataProtobuf(r);
-    service->sendToMesh(p);
-
+    if (moduleConfig.kiezbox_control.enabled) {
+        LOG_DEBUG("Broadcasting Kiezbox Message\n");
+        meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
+        r.has_status = true;
+        // Internal sensors
+        r.status.temperature_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
+        r.status.humidity_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
+        // external sensors
+        dallas.requestTemperatures(); 
+        r.status.temperature_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
+        // mppt measurements
+        // TODO: and maybe convert to hex protocol to recude delay and ressource usage
+        // RTC
+        // TODO: add support and time setting handling
+        meshtastic_MeshPacket *p = allocDataProtobuf(r);
+        service->sendToMesh(p);
+    }
     return 20000; // Poll our GPIOs every 20s
 }
