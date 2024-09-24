@@ -148,6 +148,14 @@ typedef struct _meshtastic_ModuleConfig_MQTTConfig {
     meshtastic_ModuleConfig_MapReportSettings map_report_settings;
 } meshtastic_ModuleConfig_MQTTConfig;
 
+/* KiezboxControlModule Config */
+typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
+    /* Whether the Module is enabled */
+    bool enabled;
+    /* Sets the next (inteval) at which a status should be send */
+    int32_t status_interval;
+} meshtastic_ModuleConfig_KiezboxControlConfig;
+
 /* NeighborInfoModule Config */
 typedef struct _meshtastic_ModuleConfig_NeighborInfoConfig {
     /* Whether the Module is enabled */
@@ -411,17 +419,6 @@ typedef struct _meshtastic_ModuleConfig_RemoteHardwareConfig {
     meshtastic_RemoteHardwarePin available_pins[4];
 } meshtastic_ModuleConfig_RemoteHardwareConfig;
 
-/* KiezboxControlModule Config */
-typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
-    /* Whether the Module is enabled */
-    bool enabled;
-    /* Whether the Module allows consumers to read / write to pins not defined in available_pins */
-    bool allow_undefined_pin_access;
-    /* Exposes the available pins to the mesh for reading and writing */
-    pb_size_t available_pins_count;
-    meshtastic_RemoteHardwarePin available_pins[4];
-} meshtastic_ModuleConfig_KiezboxControlConfig;
-
 /* Module Config */
 typedef struct _meshtastic_ModuleConfig {
     pb_size_t which_payload_variant;
@@ -561,6 +558,8 @@ extern "C" {
 #define meshtastic_ModuleConfig_MQTTConfig_proxy_to_client_enabled_tag 9
 #define meshtastic_ModuleConfig_MQTTConfig_map_reporting_enabled_tag 10
 #define meshtastic_ModuleConfig_MQTTConfig_map_report_settings_tag 11
+#define meshtastic_ModuleConfig_KiezboxControlConfig_enabled_tag 1
+#define meshtastic_ModuleConfig_KiezboxControlConfig_status_interval_tag 2
 #define meshtastic_ModuleConfig_NeighborInfoConfig_enabled_tag 1
 #define meshtastic_ModuleConfig_NeighborInfoConfig_update_interval_tag 2
 #define meshtastic_ModuleConfig_NeighborInfoConfig_transmit_over_lora_tag 3
@@ -650,9 +649,6 @@ extern "C" {
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_enabled_tag 1
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_allow_undefined_pin_access_tag 2
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_available_pins_tag 3
-#define meshtastic_ModuleConfig_KiezboxControlConfig_enabled_tag 1
-#define meshtastic_ModuleConfig_KiezboxControlConfig_allow_undefined_pin_access_tag 2
-#define meshtastic_ModuleConfig_KiezboxControlConfig_available_pins_tag 3
 #define meshtastic_ModuleConfig_mqtt_tag         1
 #define meshtastic_ModuleConfig_serial_tag       2
 #define meshtastic_ModuleConfig_external_notification_tag 3
@@ -733,11 +729,9 @@ X(a, STATIC,   REPEATED, MESSAGE,  available_pins,    3)
 
 #define meshtastic_ModuleConfig_KiezboxControlConfig_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
-X(a, STATIC,   SINGULAR, BOOL,     allow_undefined_pin_access,   2) \
-X(a, STATIC,   REPEATED, MESSAGE,  available_pins,    3)
+X(a, STATIC,   SINGULAR, INT32,    status_interval,   2)
 #define meshtastic_ModuleConfig_KiezboxControlConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_KiezboxControlConfig_DEFAULT NULL
-#define meshtastic_ModuleConfig_KiezboxControlConfig_available_pins_MSGTYPE meshtastic_RemoteHardwarePin
 
 #define meshtastic_ModuleConfig_NeighborInfoConfig_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, BOOL,     enabled,           1) \
@@ -917,7 +911,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_CannedMessageConfig_size 49
 #define meshtastic_ModuleConfig_DetectionSensorConfig_size 44
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_size 42
-#define meshtastic_ModuleConfig_KiezboxControlConfig_size 96
+#define meshtastic_ModuleConfig_KiezboxControlConfig_size 13
 #define meshtastic_ModuleConfig_MQTTConfig_size  254
 #define meshtastic_ModuleConfig_MapReportSettings_size 12
 #define meshtastic_ModuleConfig_NeighborInfoConfig_size 10

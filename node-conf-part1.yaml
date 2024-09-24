@@ -1,0 +1,4 @@
+owner: KB_CADC
+config:
+  lora:
+    region: EU_868

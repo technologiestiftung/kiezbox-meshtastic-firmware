@@ -13,4 +13,3 @@ PB_BIND(meshtastic_KiezboxMessage_KiezboxStatus, meshtastic_KiezboxMessage_Kiezb
 
 
 
-

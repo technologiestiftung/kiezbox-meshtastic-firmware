@@ -9,25 +9,6 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
-/* Enum definitions */
-/* TODO: REPLACE */
-typedef enum _meshtastic_KiezboxMessage_Type {
-    /* Unset/unused */
-    meshtastic_KiezboxMessage_Type_UNSET = 0,
-    /* Set gpio gpios based on gpio_mask/gpio_value */
-    meshtastic_KiezboxMessage_Type_WRITE_GPIOS = 1,
-    /* We are now interested in watching the gpio_mask gpios.
- If the selected gpios change, please broadcast GPIOS_CHANGED.
- Will implicitly change the gpios requested to be INPUT gpios. */
-    meshtastic_KiezboxMessage_Type_WATCH_GPIOS = 2,
-    /* The gpios listed in gpio_mask have changed, the new values are listed in gpio_value */
-    meshtastic_KiezboxMessage_Type_GPIOS_CHANGED = 3,
-    /* Read the gpios specified in gpio_mask, send back a READ_GPIOS_REPLY reply with gpio_value populated */
-    meshtastic_KiezboxMessage_Type_READ_GPIOS = 4,
-    /* A reply to READ_GPIOS. gpio_mask and gpio_value will be populated */
-    meshtastic_KiezboxMessage_Type_READ_GPIOS_REPLY = 5
-} meshtastic_KiezboxMessage_Type;
-
 /* Struct definitions */
 typedef struct _meshtastic_KiezboxMessage_KiezboxStatus {
     uint32_t kb_id; /* only 16 bit used */
@@ -44,23 +25,9 @@ typedef struct _meshtastic_KiezboxMessage_KiezboxStatus {
     int32_t temperature_rtc; /* in uClesius */
 } meshtastic_KiezboxMessage_KiezboxStatus;
 
-/* An example app to show off the module system. This message is used for
- KIEZBOX_CONTROL_APP PortNums.
- Also provides easy remote access to any GPIO.
- In the future other remote hardware operations can be added based on user interest
- (i.e. serial output, spi/i2c input/output).
- FIXME - currently this feature is turned on by default which is dangerous
- because no security yet (beyond the channel mechanism).
- It should be off by default and then protected based on some TBD mechanism
- (a special channel once multichannel support is included?) */
-typedef struct _meshtastic_KiezboxMessage {
-    /* What type of HardwareMessage is this? */
-    meshtastic_KiezboxMessage_Type type;
-    /* What gpios are we changing. Not used for all MessageTypes, see MessageType for details */
-    uint64_t gpio_mask;
-    /* For gpios that were listed in gpio_mask as valid, what are the signal levels for those gpios.
- Not used for all MessageTypes, see MessageType for details */
-    uint64_t gpio_value;
+/* This message is used for
+ KIEZBOX_CONTROL_APP PortNums. */
+typedef struct _meshtastic_KiezboxMessage { /* TODO: Add other message types/features */
     bool has_status;
     meshtastic_KiezboxMessage_KiezboxStatus status;
 } meshtastic_KiezboxMessage;
@@ -70,19 +37,10 @@ typedef struct _meshtastic_KiezboxMessage {
 extern "C" {
 #endif
 
-/* Helper constants for enums */
-#define _meshtastic_KiezboxMessage_Type_MIN meshtastic_KiezboxMessage_Type_UNSET
-#define _meshtastic_KiezboxMessage_Type_MAX meshtastic_KiezboxMessage_Type_READ_GPIOS_REPLY
-#define _meshtastic_KiezboxMessage_Type_ARRAYSIZE ((meshtastic_KiezboxMessage_Type)(meshtastic_KiezboxMessage_Type_READ_GPIOS_REPLY+1))
-
-#define meshtastic_KiezboxMessage_type_ENUMTYPE meshtastic_KiezboxMessage_Type
-
-
-
 /* Initializer values for message structs */
-#define meshtastic_KiezboxMessage_init_default   {_meshtastic_KiezboxMessage_Type_MIN, 0, 0, false, meshtastic_KiezboxMessage_KiezboxStatus_init_default}
+#define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_KiezboxStatus_init_default}
 #define meshtastic_KiezboxMessage_KiezboxStatus_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define meshtastic_KiezboxMessage_init_zero      {_meshtastic_KiezboxMessage_Type_MIN, 0, 0, false, meshtastic_KiezboxMessage_KiezboxStatus_init_zero}
+#define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_KiezboxStatus_init_zero}
 #define meshtastic_KiezboxMessage_KiezboxStatus_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -98,16 +56,10 @@ extern "C" {
 #define meshtastic_KiezboxMessage_KiezboxStatus_battery_voltage_tag 10
 #define meshtastic_KiezboxMessage_KiezboxStatus_battery_current_tag 11
 #define meshtastic_KiezboxMessage_KiezboxStatus_temperature_rtc_tag 12
-#define meshtastic_KiezboxMessage_type_tag       1
-#define meshtastic_KiezboxMessage_gpio_mask_tag  2
-#define meshtastic_KiezboxMessage_gpio_value_tag 3
 #define meshtastic_KiezboxMessage_status_tag     4
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_KiezboxMessage_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    type,              1) \
-X(a, STATIC,   SINGULAR, UINT64,   gpio_mask,         2) \
-X(a, STATIC,   SINGULAR, UINT64,   gpio_value,        3) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  status,            4)
 #define meshtastic_KiezboxMessage_CALLBACK NULL
 #define meshtastic_KiezboxMessage_DEFAULT NULL
@@ -139,7 +91,7 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_KiezboxStatus_msg;
 /* Maximum encoded size of messages (where known) */
 #define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_size
 #define meshtastic_KiezboxMessage_KiezboxStatus_size 127
-#define meshtastic_KiezboxMessage_size           153
+#define meshtastic_KiezboxMessage_size           129
 
 #ifdef __cplusplus
 } /* extern "C" */

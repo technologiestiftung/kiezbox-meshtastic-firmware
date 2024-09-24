@@ -1,0 +1,9 @@
+channel_url: https://meshtastic.org/e/#CgcSAQE6AgggCikSIH6XXyqBIVBjRDXzROcMWTvqzrzLDhOEt0AaZiyKSJ-lGgVhZG1pbgorEiBngAAs-W_yGxGspTnDmP47em51T1-BlIwE5XI5nzNq7BoHa2llemJveAooEiD34o6C6pUJnvV62Qaqy54LGOZyazIb4GQvLyGFh715XRoEZ3BpbxIPCAE4A0ADSAFQG2gBwAYB
+config:
+  lora:
+    region: EU_868
+module_config:
+  remoteHardware:
+    enabled: true
+owner: KB_CADC
+owner_short: cadc
