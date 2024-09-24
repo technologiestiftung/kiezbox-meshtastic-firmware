@@ -1,3 +1,4 @@
+// Heltec Wireless Stick Lite v3
 #define I2C_SCL SCL
 #define I2C_SDA SDA
 
@@ -34,3 +35,8 @@
 
 #define SX126X_DIO2_AS_RF_SWITCH
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
+
+// Kiezbox specific value
+#define KB_DHTPIN 4
+#define KB_DHTTYPE DHT22
+#define KB_ONEWIRE_PIN 5

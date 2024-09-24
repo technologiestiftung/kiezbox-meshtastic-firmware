@@ -45,10 +45,14 @@ static uint64_t digitalReads(uint64_t mask)
 
 KiezboxControlModule::KiezboxControlModule()
     : ProtobufModule("kiezboxcontrol", meshtastic_PortNum_KIEZBOX_CONTROL_APP, &meshtastic_KiezboxMessage_msg),
-      concurrency::OSThread("KiezboxControlModule")
+      concurrency::OSThread("KiezboxControlModule"),
+      dht(KB_DHTPIN, KB_DHTTYPE),
+      onewire(KB_ONEWIRE_PIN),
+      dallas(&onewire)
 {
     // restrict to the gpio channel for rx
     boundChannel = Channels::kiezboxChannel;
+    dht.begin();
 }
 
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &req, meshtastic_KiezboxMessage *pptr)
@@ -117,29 +121,22 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &r
 
 int32_t KiezboxControlModule::runOnce()
 {
-    if (moduleConfig.kiezbox_control.enabled && watchGpios) {
-        uint32_t now = millis();
+    // Broadcast sensor values
+    LOG_DEBUG("Broadcasting Kiezbox Message\n");
+    meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
+    r.has_status = true;
+    // Internal sensors
+    r.status.temperature_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
+    r.status.humidity_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
+    // external sensors
+    dallas.requestTemperatures(); 
+    r.status.temperature_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
+    // mppt measurements
+    // TODO: and maybe convert to hex protocol to recude delay and ressource usage
+    // RTC
+    // TODO: add support and time setting handling
+    meshtastic_MeshPacket *p = allocDataProtobuf(r);
+    service->sendToMesh(p);
 
-        if (now - lastWatchMsec >= WATCH_INTERVAL_MSEC) {
-            uint64_t curVal = digitalReads(watchGpios);
-            lastWatchMsec = now;
-
-            if (curVal != previousWatch) {
-                previousWatch = curVal;
-                LOG_INFO("Broadcasting GPIOS 0x%llx changed!\n", curVal);
-
-                // Something changed!  Tell the world with a broadcast message
-                meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
-                r.type = meshtastic_KiezboxMessage_Type_GPIOS_CHANGED;
-                r.gpio_value = curVal;
-                meshtastic_MeshPacket *p = allocDataProtobuf(r);
-                service->sendToMesh(p);
-            }
-        }
-    } else {
-        // No longer watching anything - stop using CPU
-        return disable();
-    }
-
-    return 2000; // Poll our GPIOs every 2000ms
+    return 20000; // Poll our GPIOs every 20s
 }

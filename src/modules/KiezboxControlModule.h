@@ -3,6 +3,11 @@
 #include "concurrency/OSThread.h"
 #include "mesh/generated/meshtastic/kiezbox_control.pb.h"
 
+// Sensor stuff
+#include "DHT.h"
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 /**
  * A module that provides easy low-level remote access to device hardware.
  */
@@ -16,6 +21,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
 
     /// The timestamp of our last watch event (we throttle watches to 1 change every 30 seconds)
     uint32_t lastWatchMsec = 0;
+    DHT dht;
+    OneWire onewire;
+    DallasTemperature dallas;
 
   public:
     /** Constructor

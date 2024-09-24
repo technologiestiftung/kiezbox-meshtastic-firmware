@@ -29,6 +29,21 @@ typedef enum _meshtastic_KiezboxMessage_Type {
 } meshtastic_KiezboxMessage_Type;
 
 /* Struct definitions */
+typedef struct _meshtastic_KiezboxMessage_KiezboxStatus {
+    uint32_t kb_id; /* only 16 bit used */
+    int64_t unix_time; /* seconds since unix epoch */
+    int32_t temperature_out; /* in uCelsius */
+    int32_t temperature_in; /* in uCelsius */
+    int32_t humidity_in; /* in u% */
+    int32_t solar_voltage; /* in mV */
+    int32_t solar_power; /* in W */
+    int32_t solar_energy_day; /* in kWh/100 */
+    int32_t solar_energy_total; /* in kWh/100 */
+    int32_t battery_voltage; /* in mV */
+    int32_t battery_current; /* in mV */
+    int32_t temperature_rtc; /* in uClesius */
+} meshtastic_KiezboxMessage_KiezboxStatus;
+
 /* An example app to show off the module system. This message is used for
  KIEZBOX_CONTROL_APP PortNums.
  Also provides easy remote access to any GPIO.
@@ -46,6 +61,8 @@ typedef struct _meshtastic_KiezboxMessage {
     /* For gpios that were listed in gpio_mask as valid, what are the signal levels for those gpios.
  Not used for all MessageTypes, see MessageType for details */
     uint64_t gpio_value;
+    bool has_status;
+    meshtastic_KiezboxMessage_KiezboxStatus status;
 } meshtastic_KiezboxMessage;
 
 
@@ -61,31 +78,68 @@ extern "C" {
 #define meshtastic_KiezboxMessage_type_ENUMTYPE meshtastic_KiezboxMessage_Type
 
 
+
 /* Initializer values for message structs */
-#define meshtastic_KiezboxMessage_init_default   {_meshtastic_KiezboxMessage_Type_MIN, 0, 0}
-#define meshtastic_KiezboxMessage_init_zero      {_meshtastic_KiezboxMessage_Type_MIN, 0, 0}
+#define meshtastic_KiezboxMessage_init_default   {_meshtastic_KiezboxMessage_Type_MIN, 0, 0, false, meshtastic_KiezboxMessage_KiezboxStatus_init_default}
+#define meshtastic_KiezboxMessage_KiezboxStatus_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_init_zero      {_meshtastic_KiezboxMessage_Type_MIN, 0, 0, false, meshtastic_KiezboxMessage_KiezboxStatus_init_zero}
+#define meshtastic_KiezboxMessage_KiezboxStatus_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define meshtastic_KiezboxMessage_KiezboxStatus_kb_id_tag 1
+#define meshtastic_KiezboxMessage_KiezboxStatus_unix_time_tag 2
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_out_tag 3
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_in_tag 4
+#define meshtastic_KiezboxMessage_KiezboxStatus_humidity_in_tag 5
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_voltage_tag 6
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_power_tag 7
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_day_tag 8
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_total_tag 9
+#define meshtastic_KiezboxMessage_KiezboxStatus_battery_voltage_tag 10
+#define meshtastic_KiezboxMessage_KiezboxStatus_battery_current_tag 11
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_rtc_tag 12
 #define meshtastic_KiezboxMessage_type_tag       1
 #define meshtastic_KiezboxMessage_gpio_mask_tag  2
 #define meshtastic_KiezboxMessage_gpio_value_tag 3
+#define meshtastic_KiezboxMessage_status_tag     4
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_KiezboxMessage_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UENUM,    type,              1) \
 X(a, STATIC,   SINGULAR, UINT64,   gpio_mask,         2) \
-X(a, STATIC,   SINGULAR, UINT64,   gpio_value,        3)
+X(a, STATIC,   SINGULAR, UINT64,   gpio_value,        3) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  status,            4)
 #define meshtastic_KiezboxMessage_CALLBACK NULL
 #define meshtastic_KiezboxMessage_DEFAULT NULL
+#define meshtastic_KiezboxMessage_status_MSGTYPE meshtastic_KiezboxMessage_KiezboxStatus
+
+#define meshtastic_KiezboxMessage_KiezboxStatus_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   kb_id,             1) \
+X(a, STATIC,   SINGULAR, INT64,    unix_time,         2) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_out,   3) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_in,    4) \
+X(a, STATIC,   SINGULAR, INT32,    humidity_in,       5) \
+X(a, STATIC,   SINGULAR, INT32,    solar_voltage,     6) \
+X(a, STATIC,   SINGULAR, INT32,    solar_power,       7) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_day,   8) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_total,   9) \
+X(a, STATIC,   SINGULAR, INT32,    battery_voltage,  10) \
+X(a, STATIC,   SINGULAR, INT32,    battery_current,  11) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_rtc,  12)
+#define meshtastic_KiezboxMessage_KiezboxStatus_CALLBACK NULL
+#define meshtastic_KiezboxMessage_KiezboxStatus_DEFAULT NULL
 
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_KiezboxStatus_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define meshtastic_KiezboxMessage_fields &meshtastic_KiezboxMessage_msg
+#define meshtastic_KiezboxMessage_KiezboxStatus_fields &meshtastic_KiezboxMessage_KiezboxStatus_msg
 
 /* Maximum encoded size of messages (where known) */
 #define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_size
-#define meshtastic_KiezboxMessage_size           24
+#define meshtastic_KiezboxMessage_KiezboxStatus_size 127
+#define meshtastic_KiezboxMessage_size           153
 
 #ifdef __cplusplus
 } /* extern "C" */
