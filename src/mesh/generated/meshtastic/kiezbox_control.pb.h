@@ -11,7 +11,9 @@
 
 /* Struct definitions */
 typedef struct _meshtastic_KiezboxMessage_KiezboxStatus {
-    uint32_t kb_id; /* only 16 bit used */
+    uint8_t box_id; /* only 8 bit used */
+    uint8_t dist_id; /* only 8 bit used */
+    bool router_powered;
     int64_t unix_time; /* seconds since unix epoch */
     int32_t temperature_out; /* in uCelsius */
     int32_t temperature_in; /* in uCelsius */
@@ -39,23 +41,25 @@ extern "C" {
 
 /* Initializer values for message structs */
 #define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_KiezboxStatus_init_default}
-#define meshtastic_KiezboxMessage_KiezboxStatus_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_KiezboxStatus_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 #define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_KiezboxStatus_init_zero}
-#define meshtastic_KiezboxMessage_KiezboxStatus_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_KiezboxStatus_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
-#define meshtastic_KiezboxMessage_KiezboxStatus_kb_id_tag 1
-#define meshtastic_KiezboxMessage_KiezboxStatus_unix_time_tag 2
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_out_tag 3
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_in_tag 4
-#define meshtastic_KiezboxMessage_KiezboxStatus_humidity_in_tag 5
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_voltage_tag 6
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_power_tag 7
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_day_tag 8
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_total_tag 9
-#define meshtastic_KiezboxMessage_KiezboxStatus_battery_voltage_tag 10
-#define meshtastic_KiezboxMessage_KiezboxStatus_battery_current_tag 11
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_rtc_tag 12
+#define meshtastic_KiezboxMessage_KiezboxStatus_box_id_tag 1
+#define meshtastic_KiezboxMessage_KiezboxStatus_dist_id_tag 2
+#define meshtastic_KiezboxMessage_KiezboxStatus_router_powered_tag 3
+#define meshtastic_KiezboxMessage_KiezboxStatus_unix_time_tag 4
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_out_tag 5
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_in_tag 6
+#define meshtastic_KiezboxMessage_KiezboxStatus_humidity_in_tag 7
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_voltage_tag 8
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_power_tag 9
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_day_tag 10
+#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_total_tag 11
+#define meshtastic_KiezboxMessage_KiezboxStatus_battery_voltage_tag 12
+#define meshtastic_KiezboxMessage_KiezboxStatus_battery_current_tag 13
+#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_rtc_tag 14
 #define meshtastic_KiezboxMessage_status_tag     4
 
 /* Struct field encoding specification for nanopb */
@@ -66,18 +70,20 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  status,            4)
 #define meshtastic_KiezboxMessage_status_MSGTYPE meshtastic_KiezboxMessage_KiezboxStatus
 
 #define meshtastic_KiezboxMessage_KiezboxStatus_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UINT32,   kb_id,             1) \
-X(a, STATIC,   SINGULAR, INT64,    unix_time,         2) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_out,   3) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_in,    4) \
-X(a, STATIC,   SINGULAR, INT32,    humidity_in,       5) \
-X(a, STATIC,   SINGULAR, INT32,    solar_voltage,     6) \
-X(a, STATIC,   SINGULAR, INT32,    solar_power,       7) \
-X(a, STATIC,   SINGULAR, INT32,    solar_energy_day,   8) \
-X(a, STATIC,   SINGULAR, INT32,    solar_energy_total,   9) \
-X(a, STATIC,   SINGULAR, INT32,    battery_voltage,  10) \
-X(a, STATIC,   SINGULAR, INT32,    battery_current,  11) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_rtc,  12)
+X(a, STATIC,   SINGULAR, UINT32,   box_id,            1) \
+X(a, STATIC,   SINGULAR, UINT32,   dist_id,           2) \
+X(a, STATIC,   SINGULAR, BOOL,     router_powered,    3) \
+X(a, STATIC,   SINGULAR, INT64,    unix_time,         4) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_out,   5) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_in,    6) \
+X(a, STATIC,   SINGULAR, INT32,    humidity_in,       7) \
+X(a, STATIC,   SINGULAR, INT32,    solar_voltage,     8) \
+X(a, STATIC,   SINGULAR, INT32,    solar_power,       9) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_day,  10) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_total,  11) \
+X(a, STATIC,   SINGULAR, INT32,    battery_voltage,  12) \
+X(a, STATIC,   SINGULAR, INT32,    battery_current,  13) \
+X(a, STATIC,   SINGULAR, INT32,    temperature_rtc,  14)
 #define meshtastic_KiezboxMessage_KiezboxStatus_CALLBACK NULL
 #define meshtastic_KiezboxMessage_KiezboxStatus_DEFAULT NULL
 
@@ -90,8 +96,8 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_KiezboxStatus_msg;
 
 /* Maximum encoded size of messages (where known) */
 #define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_size
-#define meshtastic_KiezboxMessage_KiezboxStatus_size 127
-#define meshtastic_KiezboxMessage_size           129
+#define meshtastic_KiezboxMessage_KiezboxStatus_size 129
+#define meshtastic_KiezboxMessage_size           132
 
 #ifdef __cplusplus
 } /* extern "C" */
