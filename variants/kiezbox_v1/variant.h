@@ -40,3 +40,6 @@
 #define KB_DHTPIN 4
 #define KB_DHTTYPE DHT22
 #define KB_ONEWIRE_PIN 5
+#define KB_STATUS_MIN 10000 // 10 Seconds
+#define KB_STATUS_MAX 3600000 // 1 Hour
+#define KB_POWER_PIN_DEFAULT 3

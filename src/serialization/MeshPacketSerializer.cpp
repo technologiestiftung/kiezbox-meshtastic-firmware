@@ -290,22 +290,13 @@ std::string MeshPacketSerializer::JsonSerialize(const meshtastic_MeshPacket *mp,
             break;
         }
         case meshtastic_PortNum_KIEZBOX_CONTROL_APP: {
+            msgType = "kiezboxcontrol";
             meshtastic_KiezboxMessage scratch;
             meshtastic_KiezboxMessage *decoded = NULL;
             memset(&scratch, 0, sizeof(scratch));
             if (pb_decode_from_bytes(mp->decoded.payload.bytes, mp->decoded.payload.size, &meshtastic_KiezboxMessage_msg,
                                      &scratch)) {
                 decoded = &scratch;
-                if (decoded->type == meshtastic_KiezboxMessage_Type_GPIOS_CHANGED) {
-                    msgType = "gpios_changed";
-                    msgPayload["gpio_value"] = new JSONValue((unsigned int)decoded->gpio_value);
-                    jsonObj["payload"] = new JSONValue(msgPayload);
-                } else if (decoded->type == meshtastic_KiezboxMessage_Type_READ_GPIOS_REPLY) {
-                    msgType = "gpios_read_reply";
-                    msgPayload["gpio_value"] = new JSONValue((unsigned int)decoded->gpio_value);
-                    msgPayload["gpio_mask"] = new JSONValue((unsigned int)decoded->gpio_mask);
-                    jsonObj["payload"] = new JSONValue(msgPayload);
-                }
             } else if (shouldLog) {
                 LOG_ERROR("Error decoding protobuf for KiezboxControl message!\n");
             }
