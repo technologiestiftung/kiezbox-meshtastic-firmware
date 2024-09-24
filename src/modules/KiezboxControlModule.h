@@ -16,6 +16,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     DHT dht;
     OneWire onewire;
     DallasTemperature dallas;
+    bool router_power_state;
 
   public:
     /** Constructor
