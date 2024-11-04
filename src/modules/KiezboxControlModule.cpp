@@ -60,5 +60,11 @@ int32_t KiezboxControlModule::runOnce()
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
     // TODO: maybe synt this with rtc somehow?
+    LOG_DEBUG("VEDirect debug\n");
+    ve::VEMessage msg;
+    msg.msg_generate();
+    LOG_DEBUG("VEMessage debug: %s\n", msg.get_hex_msg().c_str());
+    vedirect.send(msg);
+    vedirect.debug();
     return std::min(std::max(KB_STATUS_MIN,moduleConfig.kiezbox_control.status_interval),KB_STATUS_MAX);
 }
