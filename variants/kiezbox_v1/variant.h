@@ -43,3 +43,7 @@
 #define KB_STATUS_MIN 10000 // 10 Seconds
 #define KB_STATUS_MAX 3600000 // 1 Hour
 #define KB_POWER_PIN_DEFAULT 3
+#define KB_VED_RXPIN 18
+#define KB_VED_TXPIN 17
+#define KB_VED_BAUD 19200
+#define KB_VED_BUFFER_SIZE 128

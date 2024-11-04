@@ -8,6 +8,9 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// MPPT
+#include "ve-direct.h"
+
 /**
  * A module that provides easy low-level remote access to device hardware.
  */
@@ -17,6 +20,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     OneWire onewire;
     DallasTemperature dallas;
     bool router_power_state;
+    ve::VEDirect vedirect;
 
   public:
     /** Constructor
