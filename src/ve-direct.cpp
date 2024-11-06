@@ -120,9 +120,25 @@ bool ve::VEMessage::msg_generate() {
                 case data_type::sint8:
                     msg_append_with_checksum(value.sint8_value);
                     break;
+                case data_type::sint16:
+                    msg_append_with_checksum(value.sint16_value);
+                    break;
+                case data_type::sint32:
+                    msg_append_with_checksum(value.sint32_value);
+                    break;
+                case data_type::uint8:
+                    msg_append_with_checksum(value.uint8_value);
+                    break;
                 case data_type::uint16:
                     msg_append_with_checksum(value.uint16_value);
                     break;
+                case data_type::uint32:
+                    msg_append_with_checksum(value.uint32_value);
+                    break;
+                case data_type::string;
+                    //TODO: implement string type handling
+                    return false
+                case data_type::none;
                 default:
                     return false;
             }

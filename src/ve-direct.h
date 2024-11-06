@@ -228,6 +228,7 @@ struct VEValue
     VEValue() : type(data_type::none), sint32_value(0) {}
 
     // Templated constructor for initializing with a specific type and value
+    // TODO: add sting type handling (or not? check in the docs if setting strings is even needed)
     // TODO: rework the type handling, this feels bad :/
     template<data_type T, typename ValueType>
     VEValue(ValueType value) : type(T) {
