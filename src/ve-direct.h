@@ -2,6 +2,7 @@
 #include "configuration.h"
 #include <sstream>
 #include <iomanip>
+#include <map>
 
 namespace ve
 {
@@ -56,7 +57,7 @@ enum class id : uint16_t {
     // Generic device control registers 
     device_mode = 0x0200,
     device_state = 0x0201,
-    remote_control_en = 0x0202,
+    remote_control_conf = 0x0202,
     device_off_reason_8 = 0x0205,
     device_off_reason_32 = 0x0207,
     // Battery settings registers
@@ -78,7 +79,7 @@ enum class id : uint16_t {
     battery_tail_current = 0xEDE7,
     battery_low_temp_charge_current = 0xEDE6,
     battery_auto_equalise_stop_voltage = 0xEDE5,
-    battery_equalisation_current = 0xEDE4,
+    battery_equalisation_current_level = 0xEDE4,
     battery_equalisation_duration = 0xEDE3,
     battery_rebulk_voltage_offset = 0xED2E,
     battery_low_temp_level = 0xEDE0,
@@ -151,13 +152,132 @@ union flags_union {
     flags_union() : byte(0) {}
 };
 
+enum class data_type {
+    none,
+    sint8,
+    sint16,
+    sint32,
+    uint8,
+    uint16,
+    uint32,
+    string
+};
+
+struct id_metadata {
+    data_type type;
+    float scale;
+    const char* unit;
+};
+
+const std::map<const id,const id_metadata> id_metadata_map = {
+    {id::zero,                                  {data_type::none, 0.0, ""}},
+    {id::product_id,                            {data_type::uint32, 0.0 , ""}},
+    {id::group_id,                              {data_type::uint8, 0.0, ""}},
+    {id::serial_number,                         {data_type::string, 0.0, ""}},
+    {id::model_name,                            {data_type::string, 0.0, ""}},
+    {id::capabilities,                          {data_type::uint32, 0.0, ""}},
+    // Generic device control registers 
+    {id::device_mode,                           {data_type::uint8, 0.0, ""}},
+    {id::device_state,                          {data_type::uint8, 0.0, ""}},
+    {id::remote_control_conf,                   {data_type::uint32, 0.0, ""}},
+    {id::device_off_reason_8,                   {data_type::uint8, 0.0, ""}},
+    {id::device_off_reason_32,                  {data_type::uint32, 0.0, ""}},
+    // Battery settings registers
+    {id::battery_safe_mode,                     {data_type::uint8, 0.0, ""}},
+    {id::battery_adaptive_mode,                 {data_type::uint8, 0.0, ""}},
+    {id::battery_automatic_eq_mode,             {data_type::uint8, 0.0, ""}},
+    {id::battery_bulk_time_limit,               {data_type::uint16, 0.01, "hours"}},
+    {id::battery_absorption_time_limit,         {data_type::uint16, 0.01, "hours"}},
+    {id::battery_absorption_voltage,            {data_type::uint16, 0.01, "V"}},
+    {id::battery_float_voltage,                 {data_type::uint16, 0.01, "V"}},
+    {id::battery_equalisation_voltage,          {data_type::uint16, 0.01, "V"}},
+    {id::battery_temperature_compensation,      {data_type::sint16, 0.01, "mV/K"}},
+    {id::battery_type,                          {data_type::uint8, 1.0, ""}},
+    {id::battery_max_current,                   {data_type::uint16, 0.1, "A"}},
+    {id::battery_voltage,                       {data_type::uint8, 1.0, "V"}},
+    {id::battery_temperature,                   {data_type::uint16, 0.01, "K"}},
+    {id::battery_voltage_setting,               {data_type::uint8, 1.0, "V"}},
+    {id::battery_bms_present,                   {data_type::uint8, 0.0, ""}},
+    {id::battery_tail_current,                  {data_type::uint16, 0.1, "A"}}, // No unit in documentation
+    {id::battery_low_temp_charge_current,       {data_type::uint16, 0.1, "A"}},
+    {id::battery_auto_equalise_stop_voltage,    {data_type::uint8, 0.0, ""}},
+    {id::battery_equalisation_current_level,    {data_type::uint8, 1.0, "%"}},
+    {id::battery_equalisation_duration,         {data_type::uint16, 0.01, "hours"}},
+    {id::battery_rebulk_voltage_offset,         {data_type::uint16, 0.01, "V"}},
+    {id::battery_low_temp_level,                {data_type::sint16, 0.01, "°C"}},
+    {id::battery_voltage_compensation,          {data_type::uint16, 0.01, "V"}}
+};
+
+const id_metadata* get_id_metadata(const id id);
+
 static_assert(sizeof(flags_union) == sizeof(uint8_t), "Flags union/struct should be at most 1 byte");
+
+struct VEValue
+{
+    data_type type;
+    union {
+        int8_t sint8_value;
+        uint8_t uint8_value;
+        int16_t sint16_value;
+        uint16_t uint16_value;
+        int32_t sint32_value;
+        uint32_t uint32_value;
+    };
+    std::string str_value;
+
+    VEValue() : type(data_type::none), sint32_value(0) {}
+
+    // Templated constructor for initializing with a specific type and value
+    // TODO: rework the type handling, this feels bad :/
+    template<data_type T, typename ValueType>
+    VEValue(ValueType value) : type(T) {
+        set_value<T>(value);
+    }
+
+    // Overloaded constructor for uint16_t
+    VEValue(uint16_t value) : type(data_type::uint16), uint16_value(value) {}
+
+    // Overloaded constructor for uint8_t
+    VEValue(uint8_t value) : type(data_type::uint8), uint8_value(value) {}
+
+    // Overloaded constructor for sint8_t
+    VEValue(int8_t value) : type(data_type::sint8), sint8_value(value) {}
+
+    // Overloaded constructor for sint16_t
+    VEValue(int16_t value) : type(data_type::sint16), sint16_value(value) {}
+
+    // Overloaded constructor for sint32_t
+    VEValue(int32_t value) : type(data_type::sint32), sint32_value(value) {}
+
+    // Overloaded constructor for uint32_t
+    VEValue(uint32_t value) : type(data_type::uint32), uint32_value(value) {}
+
+    // Helper method to set the appropriate union member based on the enum type
+    template<data_type T, typename ValueType>
+    void set_value(ValueType value) {
+        // Implementation will be based on the type provided
+        if (T == data_type::sint8) {
+            sint8_value = value;
+        } else if (T == data_type::uint8) {
+            uint8_value = value;
+        } else if (T == data_type::sint16) {
+            sint16_value = value;
+        } else if (T == data_type::uint16) {
+            uint16_value = value;
+        } else if (T == data_type::sint32) {
+            sint32_value = value;
+        } else if (T == data_type::uint32) {
+            uint32_value = value;
+        }
+    }
+};
 
 class VEMessage
 {
     ve::command command;
     ve::id id;
     ve::flags_union flags;
+    ve::VEValue value;
     uint8_t checksum = 0x55;
     std::string hex_msg;
     template <typename T>
@@ -186,6 +306,7 @@ class VEMessage
         ss << std::uppercase << std::hex << std::setfill('0');
         int val_le;
         //TODO: test if endian swap works as intended (for every size!)
+        // https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#index-_005f_005fbuiltin_005fbswap16
         switch(sizeof(T)) {
             case 1:
                 val_le = static_cast<uint8_t>(val);
@@ -223,12 +344,13 @@ class VEMessage
         }
         return ret;
     }
-    public:
+public:
     VEMessage();
     bool msg_generate();
     const std::string& get_hex_msg() const {
         return hex_msg;
     }
+    bool msg_decode(const std::string& msg);
 };
 
 class VEDirect
@@ -237,7 +359,7 @@ class VEDirect
     volatile uint8_t bufferIndex = 0;
     HardwareSerial *ve_serial;
 
-    public:
+public:
     VEDirect();
     void debug();
     //void command_get(uint16_t id,uint8_t flags=0x0);
