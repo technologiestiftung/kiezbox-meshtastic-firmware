@@ -71,6 +71,15 @@ void ve::VEDirect::generate_send(VEMessage &vemessage)
     send(vemessage.get_hex_msg());
 }
 
+const ve::id_metadata* ve::get_id_metadata(const ve::id id) {
+    auto it = id_metadata_map.find(id);
+    if (it != id_metadata_map.end()) {
+        return &it->second;
+    } else {
+        return nullptr;
+    }
+}
+
 ve::VEMessage::VEMessage()
     : command(command::zero),
       id(id::zero),
@@ -82,8 +91,9 @@ ve::VEMessage::VEMessage()
 bool ve::VEMessage::msg_generate() {
     hex_msg = ":";
     //TODO: parametrize options
-    command = command::get;
+    command = command::set;
     id = id::battery_max_current;
+    value = VEValue(uint16_t(0x004F));
     msg_append_with_checksum(command,1);
     switch(command) {
         case command::enter_boot:
@@ -103,9 +113,31 @@ bool ve::VEMessage::msg_generate() {
             return false;
     }
     // TODO: this should be redundant for uint8_t ?
+    if(command == command::set) {
+        const id_metadata* meta = get_id_metadata(id);
+        if (meta) {
+            switch(meta->type) {
+                case data_type::sint8:
+                    msg_append_with_checksum(value.sint8_value);
+                    break;
+                case data_type::uint16:
+                    msg_append_with_checksum(value.uint16_value);
+                    break;
+                default:
+                    return false;
+            }
+        } else {
+            return false;
+        }
+    }
     checksum %= 256;
     msg_append_hex(checksum);
+    hex_msg += '\n';
     return true;
+}
+
+bool ve::VEMessage::msg_decode(const std::string& msg) {
+    return false;
 }
 
 // (0x55 − (0x7+0xDB+0xED) ) & 0xff
