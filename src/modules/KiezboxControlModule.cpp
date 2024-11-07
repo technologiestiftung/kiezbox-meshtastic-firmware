@@ -63,7 +63,7 @@ int32_t KiezboxControlModule::runOnce()
     LOG_DEBUG("VEDirect debug\n");
     ve::VEMessage msg;
     msg.msg_generate();
-    LOG_DEBUG("VEMessage debug: %s\n", msg.get_hex_msg().c_str());
+    LOG_DEBUG("VEMessage debug: %s\n", msg.get_hex_command().c_str());
     vedirect.send(msg);
     vedirect.debug();
     return std::min(std::max(KB_STATUS_MIN,moduleConfig.kiezbox_control.status_interval),KB_STATUS_MAX);

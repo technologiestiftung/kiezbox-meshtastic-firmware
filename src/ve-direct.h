@@ -276,11 +276,13 @@ struct VEValue
 class VEMessage
 {
     ve::command command;
+    ve::response response;
     ve::id id;
     ve::flags_union flags;
     ve::VEValue value;
     uint8_t checksum = 0x55;
-    std::string hex_msg;
+    std::string hex_command;
+    std::stringstream hex_response;
     template <typename T>
     void update_checksum(T val) {
         using view_t = uint8_t[sizeof(T)];
@@ -322,7 +324,7 @@ class VEMessage
                 return false;
         }
         ss << std::setw(width) << val_le;
-        hex_msg += ss.str();
+        hex_command += ss.str();
         return true;
     }
     template <typename T>
@@ -345,11 +347,39 @@ class VEMessage
         }
         return ret;
     }
+    template <typename T>
+    bool msg_decode_hex(T& val,size_t width) {
+        int val_le;
+        hex_response >> std::setw(width) >> std::hex >> val_le;
+        if (hex_response.fail()) {
+            //TODO: debug message
+            return false;
+        }
+        //TODO: test if endian swap works as intended (for every size!)
+        switch(sizeof(T)) {
+            case 1:
+                val = static_cast<T>(val_le);
+                break;
+            case 2:
+                val = static_cast<T>(__builtin_bswap16(val_le));
+                break;
+            case 4:
+                val = static_cast<T>(__builtin_bswap32(val_le));
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+    template <typename T>
+    bool msg_decode_hex(T& val) {
+        return msg_decode_hex(val, sizeof(T)*2);
+    }
 public:
     VEMessage();
     bool msg_generate();
-    const std::string& get_hex_msg() const {
-        return hex_msg;
+    const std::string& get_hex_command() const {
+        return hex_command;
     }
     bool msg_decode(const std::string& msg);
 };
