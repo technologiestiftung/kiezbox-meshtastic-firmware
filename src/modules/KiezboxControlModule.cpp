@@ -40,21 +40,25 @@ int32_t KiezboxControlModule::runOnce()
     if (moduleConfig.kiezbox_control.enabled) {
         LOG_DEBUG("Broadcasting Kiezbox Message\n");
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
-        r.has_status = true;
-        r.status.box_id = moduleConfig.kiezbox_control.box_id;
-        r.status.dist_id = moduleConfig.kiezbox_control.dist_id;
+        r.has_update = true;
+        r.update.has_meta = true;
+        r.update.meta.box_id = moduleConfig.kiezbox_control.box_id;
+        r.update.meta.dist_id = moduleConfig.kiezbox_control.dist_id;
         // Internal sensors
-        r.status.temperature_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
-        r.status.humidity_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
+        r.update.has_core = true;
+        r.update.core.has_values = true;
+        r.update.core.values.temp_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
+        r.update.core.values.humid_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
         // external sensors
         dallas.requestTemperatures(); 
-        r.status.temperature_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
+        r.update.core.values.temp_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
         // mppt measurements
         // TODO: and maybe convert to hex protocol to recude delay and ressource usage
         // RTC
         // TODO: add support and time setting handling
         // Checking router power state by reading pin state
-        r.status.router_powered = digitalRead(KB_POWER_PIN_DEFAULT);
+        r.update.core.has_router = true;
+        r.update.core.router.powered = digitalRead(KB_POWER_PIN_DEFAULT);
         meshtastic_MeshPacket *p = allocDataProtobuf(r);
         service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
