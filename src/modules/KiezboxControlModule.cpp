@@ -56,7 +56,7 @@ int32_t KiezboxControlModule::runOnce()
         // Checking router power state by reading pin state
         r.status.router_powered = digitalRead(KB_POWER_PIN_DEFAULT);
         meshtastic_MeshPacket *p = allocDataProtobuf(r);
-        service->sendToMesh(p);
+        service->sendToMesh(p, RX_SRC_LOCAL, true);
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
     // TODO: maybe synt this with rtc somehow?
