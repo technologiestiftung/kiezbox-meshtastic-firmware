@@ -9,29 +9,129 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
+/* Enum definitions */
+/* Modes a kiezbox can be in */
+typedef enum _meshtastic_KiezboxMessage_Mode {
+    meshtastic_KiezboxMessage_Mode_maintenance = 0,
+    meshtastic_KiezboxMessage_Mode_normal = 1,
+    meshtastic_KiezboxMessage_Mode_emergency = 2
+} meshtastic_KiezboxMessage_Mode;
+
 /* Struct definitions */
-typedef struct _meshtastic_KiezboxMessage_KiezboxStatus {
-    uint8_t box_id; /* only 8 bit used */
-    uint8_t dist_id; /* only 8 bit used */
-    bool router_powered;
-    int64_t unix_time; /* seconds since unix epoch */
-    int32_t temperature_out; /* in uCelsius */
-    int32_t temperature_in; /* in uCelsius */
-    int32_t humidity_in; /* in u% */
-    int32_t solar_voltage; /* in mV */
-    int32_t solar_power; /* in W */
-    int32_t solar_energy_day; /* in kWh/100 */
-    int32_t solar_energy_total; /* in kWh/100 */
-    int32_t battery_voltage; /* in mV */
-    int32_t battery_current; /* in mV */
-    int32_t temperature_rtc; /* in uClesius */
-} meshtastic_KiezboxMessage_KiezboxStatus;
+/* Meta information identifying the box */
+typedef struct _meshtastic_KiezboxMessage_Meta {
+    uint32_t box_id; /* only 8 bit used */
+    uint32_t dist_id; /* only 8 bit used */
+} meshtastic_KiezboxMessage_Meta;
+
+/* Router status information */
+typedef struct _meshtastic_KiezboxMessage_Router {
+    /* True if power is supplied to the router */
+    bool powered;
+    /* Router firmware software version
+ For OpenWrt this would be VERSION="23.05.2" */
+    pb_callback_t sw_version;
+    /* Router model name */
+    pb_callback_t model;
+} meshtastic_KiezboxMessage_Router;
+
+/* Message to control one or multiple boxes */
+typedef struct _meshtastic_KiezboxMessage_Control {
+    meshtastic_KiezboxMessage_Mode mode;
+    bool has_router;
+    meshtastic_KiezboxMessage_Router router;
+} meshtastic_KiezboxMessage_Control;
+
+/* Sensor values measured at the core */
+typedef struct _meshtastic_KiezboxMessage_CoreValues {
+    /* Temperature outside (C) */
+    int32_t temp_out;
+    /* Temperature inside (C) */
+    int32_t temp_in;
+    /* Relative humidity inside (%) */
+    int32_t humid_in;
+    /* Voltage of the solar panel (V) */
+    int32_t solar_voltage;
+    /* Power output of the solar panel (W) */
+    int32_t solar_power;
+    /* Energy collected by the solar panel today (Wh) */
+    int32_t solar_energy_day;
+    /* Energy collected by the solar panel in total (Wh) */
+    int32_t solar_energy_total;
+    /* Voltage of the (main) battery (V) */
+    int32_t battery_voltage;
+    /* Current of the (main) battery (A) */
+    int32_t battery_current;
+    /* Temperature of the realtime clock (C) */
+    int32_t temp_rtc;
+} meshtastic_KiezboxMessage_CoreValues;
+
+/* Contains general router status and internal sensor values */
+typedef struct _meshtastic_KiezboxMessage_Core {
+    meshtastic_KiezboxMessage_Mode mode;
+    bool has_router;
+    meshtastic_KiezboxMessage_Router router;
+    bool has_values;
+    meshtastic_KiezboxMessage_CoreValues values;
+} meshtastic_KiezboxMessage_Core;
+
+/* Sensor values measured at the sensor module */
+typedef struct _meshtastic_KiezboxMessage_SensorValues {
+    /* [ BME Sensor ]
+ Temperature (C) */
+    bool has_temp_main;
+    uint32_t temp_main;
+    /* Humidity (%) */
+    bool has_humid_main;
+    uint32_t humid_main;
+    /* Pressue (??) */
+    bool has_pressure;
+    uint32_t pressure;
+    /* Air Quality (??) */
+    bool has_air_quality;
+    uint32_t air_quality;
+    /* Particles
+ particles 1um (??) */
+    bool has_part_pm_2_5;
+    uint32_t part_pm_2_5;
+    /* particles 2.5um (??) */
+    bool has_part_pm_10;
+    uint32_t part_pm_10;
+    /* Noise (??) */
+    bool has_noise;
+    uint32_t noise;
+    /* Temperature of the rtc (C) */
+    bool has_temp_rtc;
+    uint32_t temp_rtc;
+} meshtastic_KiezboxMessage_SensorValues;
+
+/* Contains a set of sensor values and a sensor id */
+typedef struct _meshtastic_KiezboxMessage_Sensor {
+    /* ID of the sensor */
+    uint32_t sens_id;
+    bool has_values;
+    meshtastic_KiezboxMessage_SensorValues values;
+} meshtastic_KiezboxMessage_Sensor;
+
+/* Periodic update message containing optional core or sensor data */
+typedef struct _meshtastic_KiezboxMessage_Update {
+    bool has_meta;
+    meshtastic_KiezboxMessage_Meta meta;
+    /* Unix timestamp ( in seconds ), when the measurements were taken */
+    int64_t unix_time;
+    bool has_core;
+    meshtastic_KiezboxMessage_Core core;
+    bool has_sensor;
+    meshtastic_KiezboxMessage_Sensor sensor;
+} meshtastic_KiezboxMessage_Update;
 
 /* This message is used for
  KIEZBOX_CONTROL_APP PortNums. */
-typedef struct _meshtastic_KiezboxMessage { /* TODO: Add other message types/features */
-    bool has_status;
-    meshtastic_KiezboxMessage_KiezboxStatus status;
+typedef struct _meshtastic_KiezboxMessage {
+    bool has_update;
+    meshtastic_KiezboxMessage_Update update;
+    bool has_control;
+    meshtastic_KiezboxMessage_Control control;
 } meshtastic_KiezboxMessage;
 
 
@@ -39,65 +139,195 @@ typedef struct _meshtastic_KiezboxMessage { /* TODO: Add other message types/fea
 extern "C" {
 #endif
 
+/* Helper constants for enums */
+#define _meshtastic_KiezboxMessage_Mode_MIN meshtastic_KiezboxMessage_Mode_maintenance
+#define _meshtastic_KiezboxMessage_Mode_MAX meshtastic_KiezboxMessage_Mode_emergency
+#define _meshtastic_KiezboxMessage_Mode_ARRAYSIZE ((meshtastic_KiezboxMessage_Mode)(meshtastic_KiezboxMessage_Mode_emergency+1))
+
+
+
+#define meshtastic_KiezboxMessage_Control_mode_ENUMTYPE meshtastic_KiezboxMessage_Mode
+
+
+#define meshtastic_KiezboxMessage_Core_mode_ENUMTYPE meshtastic_KiezboxMessage_Mode
+
+
+
+
+
+
 /* Initializer values for message structs */
-#define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_KiezboxStatus_init_default}
-#define meshtastic_KiezboxMessage_KiezboxStatus_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-#define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_KiezboxStatus_init_zero}
-#define meshtastic_KiezboxMessage_KiezboxStatus_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_Update_init_default, false, meshtastic_KiezboxMessage_Control_init_default}
+#define meshtastic_KiezboxMessage_Meta_init_default {0, 0}
+#define meshtastic_KiezboxMessage_Control_init_default {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_default}
+#define meshtastic_KiezboxMessage_Update_init_default {false, meshtastic_KiezboxMessage_Meta_init_default, 0, false, meshtastic_KiezboxMessage_Core_init_default, false, meshtastic_KiezboxMessage_Sensor_init_default}
+#define meshtastic_KiezboxMessage_Core_init_default {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_default, false, meshtastic_KiezboxMessage_CoreValues_init_default}
+#define meshtastic_KiezboxMessage_Router_init_default {0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define meshtastic_KiezboxMessage_CoreValues_init_default {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_Sensor_init_default {0, false, meshtastic_KiezboxMessage_SensorValues_init_default}
+#define meshtastic_KiezboxMessage_SensorValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_Update_init_zero, false, meshtastic_KiezboxMessage_Control_init_zero}
+#define meshtastic_KiezboxMessage_Meta_init_zero {0, 0}
+#define meshtastic_KiezboxMessage_Control_init_zero {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_zero}
+#define meshtastic_KiezboxMessage_Update_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, 0, false, meshtastic_KiezboxMessage_Core_init_zero, false, meshtastic_KiezboxMessage_Sensor_init_zero}
+#define meshtastic_KiezboxMessage_Core_init_zero {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_zero, false, meshtastic_KiezboxMessage_CoreValues_init_zero}
+#define meshtastic_KiezboxMessage_Router_init_zero {0, {{NULL}, NULL}, {{NULL}, NULL}}
+#define meshtastic_KiezboxMessage_CoreValues_init_zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+#define meshtastic_KiezboxMessage_Sensor_init_zero {0, false, meshtastic_KiezboxMessage_SensorValues_init_zero}
+#define meshtastic_KiezboxMessage_SensorValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
-#define meshtastic_KiezboxMessage_KiezboxStatus_box_id_tag 1
-#define meshtastic_KiezboxMessage_KiezboxStatus_dist_id_tag 2
-#define meshtastic_KiezboxMessage_KiezboxStatus_router_powered_tag 3
-#define meshtastic_KiezboxMessage_KiezboxStatus_unix_time_tag 4
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_out_tag 5
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_in_tag 6
-#define meshtastic_KiezboxMessage_KiezboxStatus_humidity_in_tag 7
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_voltage_tag 8
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_power_tag 9
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_day_tag 10
-#define meshtastic_KiezboxMessage_KiezboxStatus_solar_energy_total_tag 11
-#define meshtastic_KiezboxMessage_KiezboxStatus_battery_voltage_tag 12
-#define meshtastic_KiezboxMessage_KiezboxStatus_battery_current_tag 13
-#define meshtastic_KiezboxMessage_KiezboxStatus_temperature_rtc_tag 14
-#define meshtastic_KiezboxMessage_status_tag     4
+#define meshtastic_KiezboxMessage_Meta_box_id_tag 1
+#define meshtastic_KiezboxMessage_Meta_dist_id_tag 2
+#define meshtastic_KiezboxMessage_Router_powered_tag 1
+#define meshtastic_KiezboxMessage_Router_sw_version_tag 2
+#define meshtastic_KiezboxMessage_Router_model_tag 3
+#define meshtastic_KiezboxMessage_Control_mode_tag 1
+#define meshtastic_KiezboxMessage_Control_router_tag 2
+#define meshtastic_KiezboxMessage_CoreValues_temp_out_tag 1
+#define meshtastic_KiezboxMessage_CoreValues_temp_in_tag 2
+#define meshtastic_KiezboxMessage_CoreValues_humid_in_tag 3
+#define meshtastic_KiezboxMessage_CoreValues_solar_voltage_tag 4
+#define meshtastic_KiezboxMessage_CoreValues_solar_power_tag 5
+#define meshtastic_KiezboxMessage_CoreValues_solar_energy_day_tag 6
+#define meshtastic_KiezboxMessage_CoreValues_solar_energy_total_tag 7
+#define meshtastic_KiezboxMessage_CoreValues_battery_voltage_tag 8
+#define meshtastic_KiezboxMessage_CoreValues_battery_current_tag 9
+#define meshtastic_KiezboxMessage_CoreValues_temp_rtc_tag 10
+#define meshtastic_KiezboxMessage_Core_mode_tag  1
+#define meshtastic_KiezboxMessage_Core_router_tag 2
+#define meshtastic_KiezboxMessage_Core_values_tag 3
+#define meshtastic_KiezboxMessage_SensorValues_temp_main_tag 1
+#define meshtastic_KiezboxMessage_SensorValues_humid_main_tag 2
+#define meshtastic_KiezboxMessage_SensorValues_pressure_tag 3
+#define meshtastic_KiezboxMessage_SensorValues_air_quality_tag 4
+#define meshtastic_KiezboxMessage_SensorValues_part_pm_2_5_tag 5
+#define meshtastic_KiezboxMessage_SensorValues_part_pm_10_tag 6
+#define meshtastic_KiezboxMessage_SensorValues_noise_tag 7
+#define meshtastic_KiezboxMessage_SensorValues_temp_rtc_tag 8
+#define meshtastic_KiezboxMessage_Sensor_sens_id_tag 1
+#define meshtastic_KiezboxMessage_Sensor_values_tag 2
+#define meshtastic_KiezboxMessage_Update_meta_tag 1
+#define meshtastic_KiezboxMessage_Update_unix_time_tag 2
+#define meshtastic_KiezboxMessage_Update_core_tag 3
+#define meshtastic_KiezboxMessage_Update_sensor_tag 4
+#define meshtastic_KiezboxMessage_update_tag     4
+#define meshtastic_KiezboxMessage_control_tag    5
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_KiezboxMessage_FIELDLIST(X, a) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  status,            4)
+X(a, STATIC,   OPTIONAL, MESSAGE,  update,            4) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  control,           5)
 #define meshtastic_KiezboxMessage_CALLBACK NULL
 #define meshtastic_KiezboxMessage_DEFAULT NULL
-#define meshtastic_KiezboxMessage_status_MSGTYPE meshtastic_KiezboxMessage_KiezboxStatus
+#define meshtastic_KiezboxMessage_update_MSGTYPE meshtastic_KiezboxMessage_Update
+#define meshtastic_KiezboxMessage_control_MSGTYPE meshtastic_KiezboxMessage_Control
 
-#define meshtastic_KiezboxMessage_KiezboxStatus_FIELDLIST(X, a) \
+#define meshtastic_KiezboxMessage_Meta_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, UINT32,   box_id,            1) \
-X(a, STATIC,   SINGULAR, UINT32,   dist_id,           2) \
-X(a, STATIC,   SINGULAR, BOOL,     router_powered,    3) \
-X(a, STATIC,   SINGULAR, INT64,    unix_time,         4) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_out,   5) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_in,    6) \
-X(a, STATIC,   SINGULAR, INT32,    humidity_in,       7) \
-X(a, STATIC,   SINGULAR, INT32,    solar_voltage,     8) \
-X(a, STATIC,   SINGULAR, INT32,    solar_power,       9) \
-X(a, STATIC,   SINGULAR, INT32,    solar_energy_day,  10) \
-X(a, STATIC,   SINGULAR, INT32,    solar_energy_total,  11) \
-X(a, STATIC,   SINGULAR, INT32,    battery_voltage,  12) \
-X(a, STATIC,   SINGULAR, INT32,    battery_current,  13) \
-X(a, STATIC,   SINGULAR, INT32,    temperature_rtc,  14)
-#define meshtastic_KiezboxMessage_KiezboxStatus_CALLBACK NULL
-#define meshtastic_KiezboxMessage_KiezboxStatus_DEFAULT NULL
+X(a, STATIC,   SINGULAR, UINT32,   dist_id,           2)
+#define meshtastic_KiezboxMessage_Meta_CALLBACK NULL
+#define meshtastic_KiezboxMessage_Meta_DEFAULT NULL
+
+#define meshtastic_KiezboxMessage_Control_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    mode,              1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  router,            2)
+#define meshtastic_KiezboxMessage_Control_CALLBACK NULL
+#define meshtastic_KiezboxMessage_Control_DEFAULT NULL
+#define meshtastic_KiezboxMessage_Control_router_MSGTYPE meshtastic_KiezboxMessage_Router
+
+#define meshtastic_KiezboxMessage_Update_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  meta,              1) \
+X(a, STATIC,   SINGULAR, INT64,    unix_time,         2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  core,              3) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  sensor,            4)
+#define meshtastic_KiezboxMessage_Update_CALLBACK NULL
+#define meshtastic_KiezboxMessage_Update_DEFAULT NULL
+#define meshtastic_KiezboxMessage_Update_meta_MSGTYPE meshtastic_KiezboxMessage_Meta
+#define meshtastic_KiezboxMessage_Update_core_MSGTYPE meshtastic_KiezboxMessage_Core
+#define meshtastic_KiezboxMessage_Update_sensor_MSGTYPE meshtastic_KiezboxMessage_Sensor
+
+#define meshtastic_KiezboxMessage_Core_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    mode,              1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  router,            2) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  values,            3)
+#define meshtastic_KiezboxMessage_Core_CALLBACK NULL
+#define meshtastic_KiezboxMessage_Core_DEFAULT NULL
+#define meshtastic_KiezboxMessage_Core_router_MSGTYPE meshtastic_KiezboxMessage_Router
+#define meshtastic_KiezboxMessage_Core_values_MSGTYPE meshtastic_KiezboxMessage_CoreValues
+
+#define meshtastic_KiezboxMessage_Router_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, BOOL,     powered,           1) \
+X(a, CALLBACK, OPTIONAL, STRING,   sw_version,        2) \
+X(a, CALLBACK, OPTIONAL, STRING,   model,             3)
+#define meshtastic_KiezboxMessage_Router_CALLBACK pb_default_field_callback
+#define meshtastic_KiezboxMessage_Router_DEFAULT NULL
+
+#define meshtastic_KiezboxMessage_CoreValues_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, INT32,    temp_out,          1) \
+X(a, STATIC,   SINGULAR, INT32,    temp_in,           2) \
+X(a, STATIC,   SINGULAR, INT32,    humid_in,          3) \
+X(a, STATIC,   SINGULAR, INT32,    solar_voltage,     4) \
+X(a, STATIC,   SINGULAR, INT32,    solar_power,       5) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_day,   6) \
+X(a, STATIC,   SINGULAR, INT32,    solar_energy_total,   7) \
+X(a, STATIC,   SINGULAR, INT32,    battery_voltage,   8) \
+X(a, STATIC,   SINGULAR, INT32,    battery_current,   9) \
+X(a, STATIC,   SINGULAR, INT32,    temp_rtc,         10)
+#define meshtastic_KiezboxMessage_CoreValues_CALLBACK NULL
+#define meshtastic_KiezboxMessage_CoreValues_DEFAULT NULL
+
+#define meshtastic_KiezboxMessage_Sensor_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UINT32,   sens_id,           1) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  values,            2)
+#define meshtastic_KiezboxMessage_Sensor_CALLBACK NULL
+#define meshtastic_KiezboxMessage_Sensor_DEFAULT NULL
+#define meshtastic_KiezboxMessage_Sensor_values_MSGTYPE meshtastic_KiezboxMessage_SensorValues
+
+#define meshtastic_KiezboxMessage_SensorValues_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, UINT32,   temp_main,         1) \
+X(a, STATIC,   OPTIONAL, UINT32,   humid_main,        2) \
+X(a, STATIC,   OPTIONAL, UINT32,   pressure,          3) \
+X(a, STATIC,   OPTIONAL, UINT32,   air_quality,       4) \
+X(a, STATIC,   OPTIONAL, UINT32,   part_pm_2_5,       5) \
+X(a, STATIC,   OPTIONAL, UINT32,   part_pm_10,        6) \
+X(a, STATIC,   OPTIONAL, UINT32,   noise,             7) \
+X(a, STATIC,   OPTIONAL, UINT32,   temp_rtc,          8)
+#define meshtastic_KiezboxMessage_SensorValues_CALLBACK NULL
+#define meshtastic_KiezboxMessage_SensorValues_DEFAULT NULL
 
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_msg;
-extern const pb_msgdesc_t meshtastic_KiezboxMessage_KiezboxStatus_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Meta_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Control_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Update_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Core_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Router_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_CoreValues_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Sensor_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_SensorValues_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define meshtastic_KiezboxMessage_fields &meshtastic_KiezboxMessage_msg
-#define meshtastic_KiezboxMessage_KiezboxStatus_fields &meshtastic_KiezboxMessage_KiezboxStatus_msg
+#define meshtastic_KiezboxMessage_Meta_fields &meshtastic_KiezboxMessage_Meta_msg
+#define meshtastic_KiezboxMessage_Control_fields &meshtastic_KiezboxMessage_Control_msg
+#define meshtastic_KiezboxMessage_Update_fields &meshtastic_KiezboxMessage_Update_msg
+#define meshtastic_KiezboxMessage_Core_fields &meshtastic_KiezboxMessage_Core_msg
+#define meshtastic_KiezboxMessage_Router_fields &meshtastic_KiezboxMessage_Router_msg
+#define meshtastic_KiezboxMessage_CoreValues_fields &meshtastic_KiezboxMessage_CoreValues_msg
+#define meshtastic_KiezboxMessage_Sensor_fields &meshtastic_KiezboxMessage_Sensor_msg
+#define meshtastic_KiezboxMessage_SensorValues_fields &meshtastic_KiezboxMessage_SensorValues_msg
 
 /* Maximum encoded size of messages (where known) */
-#define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_size
-#define meshtastic_KiezboxMessage_KiezboxStatus_size 129
-#define meshtastic_KiezboxMessage_size           132
+/* meshtastic_KiezboxMessage_size depends on runtime parameters */
+/* meshtastic_KiezboxMessage_Control_size depends on runtime parameters */
+/* meshtastic_KiezboxMessage_Update_size depends on runtime parameters */
+/* meshtastic_KiezboxMessage_Core_size depends on runtime parameters */
+/* meshtastic_KiezboxMessage_Router_size depends on runtime parameters */
+#define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_CoreValues_size
+#define meshtastic_KiezboxMessage_CoreValues_size 110
+#define meshtastic_KiezboxMessage_Meta_size      12
+#define meshtastic_KiezboxMessage_SensorValues_size 48
+#define meshtastic_KiezboxMessage_Sensor_size    56
 
 #ifdef __cplusplus
 } /* extern "C" */

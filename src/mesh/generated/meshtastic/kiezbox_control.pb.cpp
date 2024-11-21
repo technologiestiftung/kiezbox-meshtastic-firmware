@@ -6,10 +6,32 @@
 #error Regenerate this file with the current version of nanopb generator.
 #endif
 
-PB_BIND(meshtastic_KiezboxMessage, meshtastic_KiezboxMessage, AUTO)
+PB_BIND(meshtastic_KiezboxMessage, meshtastic_KiezboxMessage, 2)
 
 
-PB_BIND(meshtastic_KiezboxMessage_KiezboxStatus, meshtastic_KiezboxMessage_KiezboxStatus, AUTO)
+PB_BIND(meshtastic_KiezboxMessage_Meta, meshtastic_KiezboxMessage_Meta, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_Control, meshtastic_KiezboxMessage_Control, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_Update, meshtastic_KiezboxMessage_Update, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_Core, meshtastic_KiezboxMessage_Core, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_Router, meshtastic_KiezboxMessage_Router, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_CoreValues, meshtastic_KiezboxMessage_CoreValues, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_Sensor, meshtastic_KiezboxMessage_Sensor, AUTO)
+
+
+PB_BIND(meshtastic_KiezboxMessage_SensorValues, meshtastic_KiezboxMessage_SensorValues, AUTO)
+
 
 
 
