@@ -11,6 +11,9 @@
 // MPPT
 #include "ve-direct.h"
 
+// RTC
+#include "RTClib.h"
+
 /**
  * A module that provides easy low-level remote access to device hardware.
  */
@@ -21,6 +24,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     DallasTemperature dallas;
     bool router_power_state;
     ve::VEDirect vedirect;
+    // NOTE: RTClib uses the default i2c from the Wire library.
+    // Pins are defined by I2C_SCL and I2C_SDA and 42 and 41 for the heltec v3
+    RTC_DS3231 rtc;
 
   public:
     /** Constructor
