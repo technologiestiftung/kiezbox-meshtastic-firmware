@@ -4,6 +4,7 @@
 #ifndef PB_MESHTASTIC_MESHTASTIC_MODULE_CONFIG_PB_H_INCLUDED
 #define PB_MESHTASTIC_MESHTASTIC_MODULE_CONFIG_PB_H_INCLUDED
 #include <pb.h>
+#include "meshtastic/kiezbox_control.pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 40
 #error Regenerate this file with the current version of nanopb generator.
@@ -160,8 +161,14 @@ typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
     int32_t box_id;
     /* ID of the district */
     int32_t dist_id;
-    /* Uniq ID of the kiexbox */
+    /* ID of the district */
+    int32_t sens_id;
+    /* Power state target of the connected router */
     bool router_power;
+    /* Mode target of the connected router */
+    meshtastic_KiezboxMessage_Mode mode;
+    /* Mode target of the connected router */
+    meshtastic_KiezboxMessage_DeviceType dev_type;
 } meshtastic_ModuleConfig_KiezboxControlConfig;
 
 /* NeighborInfoModule Config */
@@ -496,6 +503,8 @@ extern "C" {
 
 
 
+#define meshtastic_ModuleConfig_KiezboxControlConfig_mode_ENUMTYPE meshtastic_KiezboxMessage_Mode
+#define meshtastic_ModuleConfig_KiezboxControlConfig_dev_type_ENUMTYPE meshtastic_KiezboxMessage_DeviceType
 
 #define meshtastic_ModuleConfig_DetectionSensorConfig_detection_trigger_type_ENUMTYPE meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType
 
@@ -571,7 +580,10 @@ extern "C" {
 #define meshtastic_ModuleConfig_KiezboxControlConfig_power_pin_override_tag 3
 #define meshtastic_ModuleConfig_KiezboxControlConfig_box_id_tag 4
 #define meshtastic_ModuleConfig_KiezboxControlConfig_dist_id_tag 5
-#define meshtastic_ModuleConfig_KiezboxControlConfig_router_power_tag 6
+#define meshtastic_ModuleConfig_KiezboxControlConfig_sens_id_tag 6
+#define meshtastic_ModuleConfig_KiezboxControlConfig_router_power_tag 7
+#define meshtastic_ModuleConfig_KiezboxControlConfig_mode_tag 8
+#define meshtastic_ModuleConfig_KiezboxControlConfig_dev_type_tag 9
 #define meshtastic_ModuleConfig_NeighborInfoConfig_enabled_tag 1
 #define meshtastic_ModuleConfig_NeighborInfoConfig_update_interval_tag 2
 #define meshtastic_ModuleConfig_NeighborInfoConfig_transmit_over_lora_tag 3
@@ -745,7 +757,10 @@ X(a, STATIC,   SINGULAR, INT32,    status_interval,   2) \
 X(a, STATIC,   SINGULAR, INT32,    power_pin_override,   3) \
 X(a, STATIC,   SINGULAR, INT32,    box_id,            4) \
 X(a, STATIC,   SINGULAR, INT32,    dist_id,           5) \
-X(a, STATIC,   SINGULAR, BOOL,     router_power,      6)
+X(a, STATIC,   SINGULAR, INT32,    sens_id,           6) \
+X(a, STATIC,   SINGULAR, BOOL,     router_power,      7) \
+X(a, STATIC,   SINGULAR, UENUM,    mode,              8) \
+X(a, STATIC,   SINGULAR, UENUM,    dev_type,          9)
 #define meshtastic_ModuleConfig_KiezboxControlConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_KiezboxControlConfig_DEFAULT NULL
 
@@ -927,7 +942,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_CannedMessageConfig_size 49
 #define meshtastic_ModuleConfig_DetectionSensorConfig_size 44
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_size 42
-#define meshtastic_ModuleConfig_KiezboxControlConfig_size 48
+#define meshtastic_ModuleConfig_KiezboxControlConfig_size 63
 #define meshtastic_ModuleConfig_MQTTConfig_size  254
 #define meshtastic_ModuleConfig_MapReportSettings_size 12
 #define meshtastic_ModuleConfig_NeighborInfoConfig_size 10
