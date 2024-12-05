@@ -12,10 +12,13 @@ PB_BIND(meshtastic_KiezboxMessage, meshtastic_KiezboxMessage, 2)
 PB_BIND(meshtastic_KiezboxMessage_Meta, meshtastic_KiezboxMessage_Meta, AUTO)
 
 
+PB_BIND(meshtastic_KiezboxMessage_Request, meshtastic_KiezboxMessage_Request, AUTO)
+
+
 PB_BIND(meshtastic_KiezboxMessage_Control, meshtastic_KiezboxMessage_Control, AUTO)
 
 
-PB_BIND(meshtastic_KiezboxMessage_Update, meshtastic_KiezboxMessage_Update, AUTO)
+PB_BIND(meshtastic_KiezboxMessage_Update, meshtastic_KiezboxMessage_Update, 2)
 
 
 PB_BIND(meshtastic_KiezboxMessage_Core, meshtastic_KiezboxMessage_Core, AUTO)
@@ -31,6 +34,8 @@ PB_BIND(meshtastic_KiezboxMessage_Sensor, meshtastic_KiezboxMessage_Sensor, AUTO
 
 
 PB_BIND(meshtastic_KiezboxMessage_SensorValues, meshtastic_KiezboxMessage_SensorValues, AUTO)
+
+
 
 
 

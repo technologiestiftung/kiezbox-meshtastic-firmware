@@ -45,15 +45,22 @@ int32_t KiezboxControlModule::runOnce()
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
         r.has_update = true;
         r.update.has_meta = true;
+        r.update.meta.has_box_id = true;
         r.update.meta.box_id = moduleConfig.kiezbox_control.box_id;
+        r.update.meta.has_dist_id = true;
         r.update.meta.dist_id = moduleConfig.kiezbox_control.dist_id;
+        r.update.meta.has_dev_type = true;
+        r.update.meta.dev_type = moduleConfig.kiezbox_control.dev_type;
         // Internal sensors
         r.update.has_core = true;
         r.update.core.has_values = true;
+        r.update.core.values.has_temp_in = true;
         r.update.core.values.temp_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
+        r.update.core.values.has_humid_in = true;
         r.update.core.values.humid_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
         // external sensors
         dallas.requestTemperatures(); 
+        r.update.core.values.has_temp_out = true;
         r.update.core.values.temp_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
         // mppt measurements
         // TODO: and maybe convert to hex protocol to recude delay and ressource usage
@@ -62,6 +69,7 @@ int32_t KiezboxControlModule::runOnce()
         r.update.core.router.powered = digitalRead(KB_POWER_PIN_DEFAULT);
         // RTC Time and Temperature
         r.update.unix_time = rtc.now().unixtime();
+        r.update.core.values.has_temp_rtc = true;
         r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
         meshtastic_MeshPacket *p = allocDataProtobuf(r);
         service->sendToMesh(p, RX_SRC_LOCAL, true);
