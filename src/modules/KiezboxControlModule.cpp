@@ -25,9 +25,29 @@ KiezboxControlModule::KiezboxControlModule()
     // rtc.adjust(DateTime(1732838505));
 }
 
-bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &req, meshtastic_KiezboxMessage *pptr)
+bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *kb)
 {
-    return false;
+    assert(kb);
+    bool fromOthers = mp.from != 0 && mp.from != nodeDB->getNodeNum();
+    if (mp.which_payload_variant != meshtastic_MeshPacket_decoded_tag) {
+        return false;
+    }
+    // Currently only handle messages recieved locally
+    if (!fromOthers) {
+        if (kb->has_control) {
+            switch(kb->control.which_set) {
+                case meshtastic_KiezboxMessage_Control_unix_time_tag:
+                    rtc.adjust(DateTime(kb->control.set.unix_time));
+                    break;
+                default:
+                    return false;
+            }
+        } else {
+            return false;
+        }
+    }
+    // we handle Kiezbox Messages, so always return true
+    return true;
 }
 
 int32_t KiezboxControlModule::runOnce()
