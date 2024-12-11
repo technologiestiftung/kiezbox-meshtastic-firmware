@@ -18,16 +18,14 @@ KiezboxControlModule::KiezboxControlModule()
 {
     // restrict to the gpio channel for rx
     boundChannel = Channels::kiezboxChannel;
+    rtc.begin();
     if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         LOG_DEBUG("INITIALIZE: Core module\n");
         dht.begin();
-        rtc.begin();
         pinMode(KB_POWER_PIN_DEFAULT,OUTPUT);
         // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
         digitalWrite(KB_POWER_PIN_DEFAULT, router_power_state ? HIGH : LOW );
     }
-    // TODO: ad functionality to adjust the rtc on demand. Only initially or by router/ntp
-    // rtc.adjust(DateTime(1732838505));
     if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
         LOG_DEBUG("INITIALIZE: Sensor module\n");
         Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
@@ -81,7 +79,7 @@ int32_t KiezboxControlModule::runOnce()
         if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
              moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
             r.has_update = true;
-            //r.update.unix_time = rtc.now().unixtime();
+            r.update.unix_time = rtc.now().unixtime();
             r.update.has_meta = true;
             r.update.meta.has_box_id = true;
             r.update.meta.box_id = moduleConfig.kiezbox_control.box_id;
@@ -144,6 +142,9 @@ int32_t KiezboxControlModule::runOnce()
                     } else {
                         LOG_DEBUG("sds sensor is sleeping now.\n");
                     }
+                    // RTC Time and Temperature
+                    r.update.sensor.values.has_temp_rtc = true;
+                    r.update.sensor.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
                     if (!bme680.endReading()) {
                         LOG_DEBUG("bme680 failed to read.\n");
                     } else {
