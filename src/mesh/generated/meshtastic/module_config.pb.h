@@ -152,6 +152,8 @@ typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
     meshtastic_KiezboxMessage_Mode mode;
     /* Mode target of the connected router */
     meshtastic_KiezboxMessage_DeviceType dev_type;
+    /* Sets the warmup time for the sds dust sensor */
+    int32_t sds_warmup_time;
 } meshtastic_ModuleConfig_KiezboxControlConfig;
 
 /* NeighborInfoModule Config */
@@ -500,7 +502,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_MQTTConfig_init_default {0, "", "", "", 0, 0, 0, "", 0, 0, false, meshtastic_ModuleConfig_MapReportSettings_init_default}
 #define meshtastic_ModuleConfig_MapReportSettings_init_default {0, 0}
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_init_default {0, 0, 0, {meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default}}
-#define meshtastic_ModuleConfig_KiezboxControlConfig_init_default {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN}
+#define meshtastic_ModuleConfig_KiezboxControlConfig_init_default {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN, 0}
 #define meshtastic_ModuleConfig_NeighborInfoConfig_init_default {0, 0}
 #define meshtastic_ModuleConfig_DetectionSensorConfig_init_default {0, 0, 0, 0, "", 0, 0, 0}
 #define meshtastic_ModuleConfig_AudioConfig_init_default {0, 0, _meshtastic_ModuleConfig_AudioConfig_Audio_Baud_MIN, 0, 0, 0, 0}
@@ -517,7 +519,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_MQTTConfig_init_zero {0, "", "", "", 0, 0, 0, "", 0, 0, false, meshtastic_ModuleConfig_MapReportSettings_init_zero}
 #define meshtastic_ModuleConfig_MapReportSettings_init_zero {0, 0}
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_init_zero {0, 0, 0, {meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero}}
-#define meshtastic_ModuleConfig_KiezboxControlConfig_init_zero {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN}
+#define meshtastic_ModuleConfig_KiezboxControlConfig_init_zero {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN, 0}
 #define meshtastic_ModuleConfig_NeighborInfoConfig_init_zero {0, 0}
 #define meshtastic_ModuleConfig_DetectionSensorConfig_init_zero {0, 0, 0, 0, "", 0, 0, 0}
 #define meshtastic_ModuleConfig_AudioConfig_init_zero {0, 0, _meshtastic_ModuleConfig_AudioConfig_Audio_Baud_MIN, 0, 0, 0, 0}
@@ -554,6 +556,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_KiezboxControlConfig_router_power_tag 7
 #define meshtastic_ModuleConfig_KiezboxControlConfig_mode_tag 8
 #define meshtastic_ModuleConfig_KiezboxControlConfig_dev_type_tag 9
+#define meshtastic_ModuleConfig_KiezboxControlConfig_sds_warmup_time_tag 10
 #define meshtastic_ModuleConfig_NeighborInfoConfig_enabled_tag 1
 #define meshtastic_ModuleConfig_NeighborInfoConfig_update_interval_tag 2
 #define meshtastic_ModuleConfig_DetectionSensorConfig_enabled_tag 1
@@ -726,7 +729,8 @@ X(a, STATIC,   SINGULAR, INT32,    dist_id,           5) \
 X(a, STATIC,   SINGULAR, INT32,    sens_id,           6) \
 X(a, STATIC,   SINGULAR, BOOL,     router_power,      7) \
 X(a, STATIC,   SINGULAR, UENUM,    mode,              8) \
-X(a, STATIC,   SINGULAR, UENUM,    dev_type,          9)
+X(a, STATIC,   SINGULAR, UENUM,    dev_type,          9) \
+X(a, STATIC,   SINGULAR, INT32,    sds_warmup_time,  10)
 #define meshtastic_ModuleConfig_KiezboxControlConfig_CALLBACK NULL
 #define meshtastic_ModuleConfig_KiezboxControlConfig_DEFAULT NULL
 
@@ -904,7 +908,7 @@ extern const pb_msgdesc_t meshtastic_RemoteHardwarePin_msg;
 #define meshtastic_ModuleConfig_CannedMessageConfig_size 49
 #define meshtastic_ModuleConfig_DetectionSensorConfig_size 44
 #define meshtastic_ModuleConfig_ExternalNotificationConfig_size 42
-#define meshtastic_ModuleConfig_KiezboxControlConfig_size 63
+#define meshtastic_ModuleConfig_KiezboxControlConfig_size 74
 #define meshtastic_ModuleConfig_MQTTConfig_size  254
 #define meshtastic_ModuleConfig_MapReportSettings_size 12
 #define meshtastic_ModuleConfig_NeighborInfoConfig_size 8

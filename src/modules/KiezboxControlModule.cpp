@@ -31,6 +31,16 @@ KiezboxControlModule::KiezboxControlModule()
     if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
         LOG_DEBUG("INITIALIZE: Sensor module\n");
         Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
+        if (!bme680.begin()) {
+            LOG_DEBUG("Failed to initialize BME680\n");
+        }
+        // Set up oversampling and filter initialization
+        // TODO: review parameter settings
+        bme680.setTemperatureOversampling(BME680_OS_8X);
+        bme680.setHumidityOversampling(BME680_OS_2X);
+        bme680.setPressureOversampling(BME680_OS_4X);
+        bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
+        bme680.setGasHeater(320, 150); // 320*C for 150 ms
     }
 }
 
@@ -118,20 +128,33 @@ int32_t KiezboxControlModule::runOnce()
                     return 30000; //TODO: set from module config
                     break;
                 case sens_state_t::sds_warmup:
+                    bme680.beginReading();
                     PmResult pm = sds.queryPm();
                     r.update.meta.has_sens_id = true;
                     r.update.meta.sens_id = moduleConfig.kiezbox_control.sens_id;
                     r.update.has_sensor = true;
                     r.update.sensor.has_values = true;
-                    r.update.sensor.values.has_part_pm_2_5 = true;
-                    r.update.sensor.values.part_pm_2_5 = static_cast<int32_t>(pm.pm25 * 1000.0);
-                    r.update.sensor.values.has_part_pm_10 = true;
-                    r.update.sensor.values.part_pm_10 = static_cast<int32_t>(pm.pm10 * 1000.0);
+                    r.update.sensor.values.has_part_pm25 = true;
+                    r.update.sensor.values.part_pm25 = static_cast<int32_t>(pm.pm25 * 1000.0);
+                    r.update.sensor.values.has_part_pm10 = true;
+                    r.update.sensor.values.part_pm10 = static_cast<int32_t>(pm.pm10 * 1000.0);
                     WorkingStateResult state = sds.sleep();
                     if (state.isWorking()) {
                         LOG_DEBUG("sds sensor sleep failed.\n");
                     } else {
-                        LOG_DEBUG("DUST sensor is sleeping.\n");
+                        LOG_DEBUG("sds sensor is sleeping now.\n");
+                    }
+                    if (!bme680.endReading()) {
+                        LOG_DEBUG("bme680 failed to read.\n");
+                    } else {
+                        r.update.sensor.values.has_temp_main = true;
+                        r.update.sensor.values.temp_main = static_cast<int32_t>(bme680.temperature * 1000.0);
+                        r.update.sensor.values.has_humid_main = true;
+                        r.update.sensor.values.humid_main = static_cast<int32_t>(bme680.humidity * 1000.0);
+                        r.update.sensor.values.has_pressure = true;
+                        r.update.sensor.values.pressure = static_cast<int32_t>(bme680.pressure * 10.0);
+                        r.update.sensor.values.has_air_quality = true;
+                        r.update.sensor.values.air_quality = static_cast<int32_t>(bme680.gas_resistance * 1.0);
                     }
                     sens_state = sens_state_t::sds_done;
                     break;

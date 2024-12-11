@@ -1,6 +1,6 @@
 // Heltec Wireless Stick Lite v3
-#define I2C_SCL SCL
-#define I2C_SDA SDA
+#define I2C_SCL 46
+#define I2C_SDA 45
 
 #define LED_PIN LED
 

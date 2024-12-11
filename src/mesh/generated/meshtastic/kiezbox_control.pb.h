@@ -141,11 +141,11 @@ typedef struct _meshtastic_KiezboxMessage_SensorValues {
     uint32_t air_quality;
     /* Particles
  particles 1um (??) */
-    bool has_part_pm_2_5;
-    uint32_t part_pm_2_5;
+    bool has_part_pm25;
+    uint32_t part_pm25;
     /* particles 2.5um (??) */
-    bool has_part_pm_10;
-    uint32_t part_pm_10;
+    bool has_part_pm10;
+    uint32_t part_pm10;
     /* Noise (??) */
     bool has_noise;
     uint32_t noise;
@@ -270,8 +270,8 @@ extern "C" {
 #define meshtastic_KiezboxMessage_SensorValues_humid_main_tag 2
 #define meshtastic_KiezboxMessage_SensorValues_pressure_tag 3
 #define meshtastic_KiezboxMessage_SensorValues_air_quality_tag 4
-#define meshtastic_KiezboxMessage_SensorValues_part_pm_2_5_tag 5
-#define meshtastic_KiezboxMessage_SensorValues_part_pm_10_tag 6
+#define meshtastic_KiezboxMessage_SensorValues_part_pm25_tag 5
+#define meshtastic_KiezboxMessage_SensorValues_part_pm10_tag 6
 #define meshtastic_KiezboxMessage_SensorValues_noise_tag 7
 #define meshtastic_KiezboxMessage_SensorValues_temp_rtc_tag 8
 #define meshtastic_KiezboxMessage_Sensor_values_tag 1
@@ -369,8 +369,8 @@ X(a, STATIC,   OPTIONAL, UINT32,   temp_main,         1) \
 X(a, STATIC,   OPTIONAL, UINT32,   humid_main,        2) \
 X(a, STATIC,   OPTIONAL, UINT32,   pressure,          3) \
 X(a, STATIC,   OPTIONAL, UINT32,   air_quality,       4) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm_2_5,       5) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm_10,        6) \
+X(a, STATIC,   OPTIONAL, UINT32,   part_pm25,         5) \
+X(a, STATIC,   OPTIONAL, UINT32,   part_pm10,         6) \
 X(a, STATIC,   OPTIONAL, UINT32,   noise,             7) \
 X(a, STATIC,   OPTIONAL, UINT32,   temp_rtc,          8)
 #define meshtastic_KiezboxMessage_SensorValues_CALLBACK NULL
