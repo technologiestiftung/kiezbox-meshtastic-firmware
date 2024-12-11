@@ -129,29 +129,29 @@ typedef struct _meshtastic_KiezboxMessage_SensorValues {
     /* [ BME Sensor ]
  Temperature (C) */
     bool has_temp_main;
-    uint32_t temp_main;
+    int32_t temp_main;
     /* Humidity (%) */
     bool has_humid_main;
-    uint32_t humid_main;
+    int32_t humid_main;
     /* Pressue (Pa) */
     bool has_pressure;
-    uint32_t pressure;
+    int32_t pressure;
     /* Air Quality (??) */
     bool has_air_quality;
-    uint32_t air_quality;
+    int32_t air_quality;
     /* Particles
  particles 1um (??) */
     bool has_part_pm25;
-    uint32_t part_pm25;
+    int32_t part_pm25;
     /* particles 2.5um (??) */
     bool has_part_pm10;
-    uint32_t part_pm10;
+    int32_t part_pm10;
     /* Noise (??) */
     bool has_noise;
-    uint32_t noise;
+    int32_t noise;
     /* Temperature of the rtc (C) */
     bool has_temp_rtc;
-    uint32_t temp_rtc;
+    int32_t temp_rtc;
 } meshtastic_KiezboxMessage_SensorValues;
 
 /* Contains a set of sensor values and a sensor id */
@@ -365,14 +365,14 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  values,            1)
 #define meshtastic_KiezboxMessage_Sensor_values_MSGTYPE meshtastic_KiezboxMessage_SensorValues
 
 #define meshtastic_KiezboxMessage_SensorValues_FIELDLIST(X, a) \
-X(a, STATIC,   OPTIONAL, UINT32,   temp_main,         1) \
-X(a, STATIC,   OPTIONAL, UINT32,   humid_main,        2) \
-X(a, STATIC,   OPTIONAL, UINT32,   pressure,          3) \
-X(a, STATIC,   OPTIONAL, UINT32,   air_quality,       4) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm25,         5) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm10,         6) \
-X(a, STATIC,   OPTIONAL, UINT32,   noise,             7) \
-X(a, STATIC,   OPTIONAL, UINT32,   temp_rtc,          8)
+X(a, STATIC,   OPTIONAL, INT32,    temp_main,         1) \
+X(a, STATIC,   OPTIONAL, INT32,    humid_main,        2) \
+X(a, STATIC,   OPTIONAL, INT32,    pressure,          3) \
+X(a, STATIC,   OPTIONAL, INT32,    air_quality,       4) \
+X(a, STATIC,   OPTIONAL, INT32,    part_pm25,         5) \
+X(a, STATIC,   OPTIONAL, INT32,    part_pm10,         6) \
+X(a, STATIC,   OPTIONAL, INT32,    noise,             7) \
+X(a, STATIC,   OPTIONAL, INT32,    temp_rtc,          8)
 #define meshtastic_KiezboxMessage_SensorValues_CALLBACK NULL
 #define meshtastic_KiezboxMessage_SensorValues_DEFAULT NULL
 
@@ -409,8 +409,8 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_SensorValues_msg;
 #define meshtastic_KiezboxMessage_CoreValues_size 110
 #define meshtastic_KiezboxMessage_Meta_size      20
 #define meshtastic_KiezboxMessage_Request_size   24
-#define meshtastic_KiezboxMessage_SensorValues_size 48
-#define meshtastic_KiezboxMessage_Sensor_size    50
+#define meshtastic_KiezboxMessage_SensorValues_size 88
+#define meshtastic_KiezboxMessage_Sensor_size    90
 
 #ifdef __cplusplus
 } /* extern "C" */
