@@ -39,6 +39,11 @@ KiezboxControlModule::KiezboxControlModule()
         bme680.setPressureOversampling(BME680_OS_4X);
         bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
         bme680.setGasHeater(320, 150); // 320*C for 150 ms
+        // Initialize I2S for microphone
+        i2s.setPins(KB_I2S_SCK, KB_I2S_WS, KB_I2S_SDOUT, KB_I2S_DIN, KB_I2S_MCLK);
+        if (!i2s.begin(I2S_MODE_STD, 16000, I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO, I2S_STD_SLOT_RIGHT)) {
+            LOG_DEBUG("Failed to initialize I2S device\n");
+        }
     }
 }
 

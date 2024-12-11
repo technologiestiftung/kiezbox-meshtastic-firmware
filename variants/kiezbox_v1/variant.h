@@ -50,3 +50,8 @@
 #define KB_DUST_BAUD 9600
 #define KB_DUST_RXPIN 48
 #define KB_DUST_TXPIN 47
+#define KB_I2S_SCK = 7;
+#define KB_I2S_WS = 5;
+#define KB_I2S_DIN = 4;
+#define KB_I2S_MCLK = -1;
+#define KB_I2S_SDOUT = -1;
