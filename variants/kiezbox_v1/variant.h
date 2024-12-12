@@ -50,3 +50,4 @@
 #define KB_DUST_BAUD 9600
 #define KB_DUST_RXPIN 48
 #define KB_DUST_TXPIN 47
+#define KB_BAT_PIN 3
