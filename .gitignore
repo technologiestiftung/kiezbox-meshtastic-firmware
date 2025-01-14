@@ -24,6 +24,7 @@ nanopb*
 flash.uf2
 cmake-build*
 __pycache__
+.cache
 
 *.swp
 *.swo
