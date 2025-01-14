@@ -1,6 +1,6 @@
 // Heltec Wireless Stick Lite v3
-#define I2C_SCL SCL
-#define I2C_SDA SDA
+#define I2C_SCL 46
+#define I2C_SDA 45
 
 #define LED_PIN LED
 
@@ -47,3 +47,7 @@
 #define KB_VED_TXPIN 17
 #define KB_VED_BAUD 19200
 #define KB_VED_BUFFER_SIZE 128
+#define KB_DUST_BAUD 9600
+#define KB_DUST_RXPIN 48
+#define KB_DUST_TXPIN 47
+#define KB_BAT_PIN 3
