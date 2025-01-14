@@ -14,6 +14,18 @@
 // RTC
 #include "RTClib.h"
 
+// Dust sensor
+#include "SdsDustSensor.h"
+
+// BME 680
+#include <Adafruit_BME680.h>
+
+enum class sens_state_t {
+    sds_bootup = 0,
+    sds_done = 1,
+    sds_warmup = 2,
+};
+
 /**
  * A module that provides easy low-level remote access to device hardware.
  */
@@ -27,6 +39,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     // NOTE: RTClib uses the default i2c from the Wire library.
     // Pins are defined by I2C_SCL and I2C_SDA and 42 and 41 for the heltec v3
     RTC_DS3231 rtc;
+    sens_state_t sens_state;
+    SdsDustSensor sds;
+    Adafruit_BME680 bme680;
 
   public:
     /** Constructor
