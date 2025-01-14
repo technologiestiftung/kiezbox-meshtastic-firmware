@@ -129,29 +129,32 @@ typedef struct _meshtastic_KiezboxMessage_SensorValues {
     /* [ BME Sensor ]
  Temperature (C) */
     bool has_temp_main;
-    uint32_t temp_main;
+    int32_t temp_main;
     /* Humidity (%) */
     bool has_humid_main;
-    uint32_t humid_main;
+    int32_t humid_main;
     /* Pressue (Pa) */
     bool has_pressure;
-    uint32_t pressure;
+    int32_t pressure;
     /* Air Quality (??) */
     bool has_air_quality;
-    uint32_t air_quality;
+    int32_t air_quality;
     /* Particles
  particles 1um (??) */
-    bool has_part_pm_2_5;
-    uint32_t part_pm_2_5;
+    bool has_part_pm25;
+    int32_t part_pm25;
     /* particles 2.5um (??) */
-    bool has_part_pm_10;
-    uint32_t part_pm_10;
+    bool has_part_pm10;
+    int32_t part_pm10;
     /* Noise (??) */
     bool has_noise;
-    uint32_t noise;
+    int32_t noise;
     /* Temperature of the rtc (C) */
     bool has_temp_rtc;
-    uint32_t temp_rtc;
+    int32_t temp_rtc;
+    /* Voltage of the (main) battery (V) */
+    bool has_battery_voltage;
+    int32_t battery_voltage;
 } meshtastic_KiezboxMessage_SensorValues;
 
 /* Contains a set of sensor values and a sensor id */
@@ -224,7 +227,7 @@ extern "C" {
 #define meshtastic_KiezboxMessage_Router_init_default {0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define meshtastic_KiezboxMessage_CoreValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Sensor_init_default {false, meshtastic_KiezboxMessage_SensorValues_init_default}
-#define meshtastic_KiezboxMessage_SensorValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_SensorValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_Update_init_zero, false, meshtastic_KiezboxMessage_Control_init_zero}
 #define meshtastic_KiezboxMessage_Meta_init_zero {false, 0, false, 0, false, 0, false, _meshtastic_KiezboxMessage_DeviceType_MIN}
 #define meshtastic_KiezboxMessage_Request_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, false, _meshtastic_KiezboxMessage_Request_Type_MIN}
@@ -234,7 +237,7 @@ extern "C" {
 #define meshtastic_KiezboxMessage_Router_init_zero {0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define meshtastic_KiezboxMessage_CoreValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Sensor_init_zero {false, meshtastic_KiezboxMessage_SensorValues_init_zero}
-#define meshtastic_KiezboxMessage_SensorValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_SensorValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define meshtastic_KiezboxMessage_Meta_box_id_tag 1
@@ -270,10 +273,11 @@ extern "C" {
 #define meshtastic_KiezboxMessage_SensorValues_humid_main_tag 2
 #define meshtastic_KiezboxMessage_SensorValues_pressure_tag 3
 #define meshtastic_KiezboxMessage_SensorValues_air_quality_tag 4
-#define meshtastic_KiezboxMessage_SensorValues_part_pm_2_5_tag 5
-#define meshtastic_KiezboxMessage_SensorValues_part_pm_10_tag 6
+#define meshtastic_KiezboxMessage_SensorValues_part_pm25_tag 5
+#define meshtastic_KiezboxMessage_SensorValues_part_pm10_tag 6
 #define meshtastic_KiezboxMessage_SensorValues_noise_tag 7
 #define meshtastic_KiezboxMessage_SensorValues_temp_rtc_tag 8
+#define meshtastic_KiezboxMessage_SensorValues_battery_voltage_tag 9
 #define meshtastic_KiezboxMessage_Sensor_values_tag 1
 #define meshtastic_KiezboxMessage_Update_meta_tag 1
 #define meshtastic_KiezboxMessage_Update_unix_time_tag 2
@@ -365,14 +369,15 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  values,            1)
 #define meshtastic_KiezboxMessage_Sensor_values_MSGTYPE meshtastic_KiezboxMessage_SensorValues
 
 #define meshtastic_KiezboxMessage_SensorValues_FIELDLIST(X, a) \
-X(a, STATIC,   OPTIONAL, UINT32,   temp_main,         1) \
-X(a, STATIC,   OPTIONAL, UINT32,   humid_main,        2) \
-X(a, STATIC,   OPTIONAL, UINT32,   pressure,          3) \
-X(a, STATIC,   OPTIONAL, UINT32,   air_quality,       4) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm_2_5,       5) \
-X(a, STATIC,   OPTIONAL, UINT32,   part_pm_10,        6) \
-X(a, STATIC,   OPTIONAL, UINT32,   noise,             7) \
-X(a, STATIC,   OPTIONAL, UINT32,   temp_rtc,          8)
+X(a, STATIC,   OPTIONAL, INT32,    temp_main,         1) \
+X(a, STATIC,   OPTIONAL, INT32,    humid_main,        2) \
+X(a, STATIC,   OPTIONAL, INT32,    pressure,          3) \
+X(a, STATIC,   OPTIONAL, INT32,    air_quality,       4) \
+X(a, STATIC,   OPTIONAL, INT32,    part_pm25,         5) \
+X(a, STATIC,   OPTIONAL, INT32,    part_pm10,         6) \
+X(a, STATIC,   OPTIONAL, INT32,    noise,             7) \
+X(a, STATIC,   OPTIONAL, INT32,    temp_rtc,          8) \
+X(a, STATIC,   OPTIONAL, INT32,    battery_voltage,   9)
 #define meshtastic_KiezboxMessage_SensorValues_CALLBACK NULL
 #define meshtastic_KiezboxMessage_SensorValues_DEFAULT NULL
 
@@ -409,8 +414,8 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_SensorValues_msg;
 #define meshtastic_KiezboxMessage_CoreValues_size 110
 #define meshtastic_KiezboxMessage_Meta_size      20
 #define meshtastic_KiezboxMessage_Request_size   24
-#define meshtastic_KiezboxMessage_SensorValues_size 48
-#define meshtastic_KiezboxMessage_Sensor_size    50
+#define meshtastic_KiezboxMessage_SensorValues_size 99
+#define meshtastic_KiezboxMessage_Sensor_size    101
 
 #ifdef __cplusplus
 } /* extern "C" */
