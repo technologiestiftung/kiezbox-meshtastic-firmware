@@ -6,34 +6,57 @@ ve::VEDirect::VEDirect()
     ve_serial->setRxBufferSize(SERIAL_BUFFER_SIZE);
     ve_serial->begin(KB_VED_BAUD, SERIAL_8N1, KB_VED_RXPIN, KB_VED_TXPIN);
 }
-void ve::VEDirect::debug()
+
+void ve::VEDirect::debug(ve::VEMessage &vemessage)
 {
+    if(receive_next(vemessage)) {
+        LOG_DEBUG("VEDirect debug Message: %s\n", &buffer);
+    } else {
+        LOG_DEBUG("VEDirect no valid message received!\n");
+    }
+    bufferIndex = 0;
+}
+
+bool ve::VEDirect::receive_next(ve::VEMessage &vemessage)
+{
+    LOG_DEBUG("VEDirect receive_next\n");
     bool is_hex_command = false;
-    while (ve_serial->available()) {
+    do { //TODO: this read blocks until answer is received.
+         // we should probably implement this with a timeout to not have the whole device blocked by a broken mppt (connection)?
         unsigned char received = ve_serial->read();
         // Check if message starts with : , which marks the start of a hex message
         if (received == ':') {
             bufferIndex = 0;
-            buffer[bufferIndex++] = received;
+            buffer[bufferIndex] = received;
+            bufferIndex++;
             is_hex_command = true;
             continue;
         // messages end with a newline
-        } else if (received == '\n') {
-            // terminate string with null character
-            buffer[bufferIndex] = '\0';
-            if (is_hex_command) {
-                LOG_DEBUG("VEDirect Message: %s\n", &buffer);
-                // reset, as we don't know if there is plain ascii between the hex messages
-                is_hex_command = false;
+        } else if (is_hex_command) {
+            if (received == '\n') {
+                // terminate string with null character
+                buffer[bufferIndex] = '\0';
+                return true;
+            // put only hex characters in the buffer (if we have enough space)
+            } else if ( isxdigit(received) && (bufferIndex < KB_VED_BUFFER_SIZE - 1)) {
+                buffer[bufferIndex] = received;
+                bufferIndex++;
+            } else { // recieved garbage inside hex command or buffer overflowed
+                return false;
             }
-            bufferIndex = 0;
-        // put only hex characters in the buffer (if we have enough space)
-        } else if ( isxdigit(received) && (bufferIndex < KB_VED_BUFFER_SIZE - 1)) {
-            buffer[bufferIndex++] = received;
         } else { // reset in case we recieve non hex
-            is_hex_command = false;
+            LOG_DEBUG("VEDirect skipping char: %c / 0x%02X\n", received, received);
             bufferIndex = 0;
         }
+    } while (ve_serial->available());
+    return false;
+}
+
+void ve::VEDirect::discard()
+{
+    while (int bytes = ve_serial->available()) {
+        LOG_DEBUG("VEDirect discarding %d bytes\n", bytes);
+        for(int i = 0;i<bytes;i++) ve_serial->read();
     }
 }
 
@@ -57,6 +80,7 @@ void ve::VEDirect::debug()
 
 void ve::VEDirect::send(const std::string& message)
 {
+    LOG_DEBUG("VEMessage sending message: %s\n", message.c_str());
     ve_serial->write(message.c_str(),message.length());
 }
 
@@ -88,12 +112,25 @@ ve::VEMessage::VEMessage()
 {
 }
 
+ve::VEMessage::VEMessage(ve::command command, ve::id id, VEValue value, flags_union flags)
+    : command(command),
+      id(id),
+      value(value),
+      flags(flags)
+{
+}
+
+bool ve::VEMessage::msg_generate(ve::command command, ve::id id, VEValue value, flags_union flags){
+    this->command = command;
+    this->id = id;
+    this->value = value;
+    this->flags = flags;
+    return msg_generate();
+}
+
 bool ve::VEMessage::msg_generate() {
     hex_command = ":";
     //TODO: parametrize options
-    command = command::set;
-    id = id::battery_max_current;
-    value = VEValue(uint16_t(0x004F));
     msg_append_with_checksum(command,1);
     switch(command) {
         case command::enter_boot:
@@ -153,8 +190,12 @@ bool ve::VEMessage::msg_generate() {
 }
 
 bool ve::VEMessage::msg_decode(const std::string& msg) {
-    //TODO: reset checksum?
     hex_response.str(msg);
+    return msg_decode();
+}
+
+bool ve::VEMessage::msg_decode() {
+    //TODO: reset checksum?
     if (hex_response.get() != ':') {
         //TODO debug output
         return false;
@@ -176,7 +217,8 @@ bool ve::VEMessage::msg_decode(const std::string& msg) {
             //TODO: parse this command. It has a wierd format. why are they suddenly trying to save bits? :D
             break;
         case response::get:
-        case response::set: {
+        case response::set:
+        case response::async: { //TODO: how to handle async messages? like get/set, but different?
             msg_decode_hex(id);
             msg_decode_hex(flags.byte);
             const id_metadata* meta = get_id_metadata(id);
@@ -221,6 +263,36 @@ bool ve::VEMessage::msg_decode(const std::string& msg) {
     //TODO: implement flag handling
     //TODO: implement checksum check
     return false;
+}
+
+void ve::VEMessage::resp_debug() {
+    LOG_DEBUG("debugging response of type 0x%05X\n",(uint8_t)response);
+    switch(response) {
+        case response::done:
+        case response::unknown:
+        case response::error:
+        case response::ping:
+            break;
+        case response::get:
+        case response::set:
+        case response::async: { //TODO: how to handle async messages? like get/set, but different?
+            const id_metadata* meta = get_id_metadata(id);
+            if (meta) {
+                switch(id) {
+                    case id::battery_max_current:
+                        LOG_DEBUG("Battery max current is %f %s\n", value.uint16_value * meta->scale , meta->unit);
+                        break;
+                    default:
+                        LOG_DEBUG("Unknown id 0x%04X\n", (uint16_t)id);
+                }
+            } else {
+                LOG_DEBUG("No metadata for id 0x%04X\n", (uint16_t)id);
+            }
+            break;
+        }
+        default:
+            return;
+    }
 }
 
 // (0x55 − (0x7+0xDB+0xED) ) & 0xff

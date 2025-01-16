@@ -5,6 +5,7 @@
 #include "Router.h"
 #include "configuration.h"
 #include "main.h"
+#include "ve-direct.h"
 
 KiezboxControlModule::KiezboxControlModule()
     : ProtobufModule("kiezboxcontrol", meshtastic_PortNum_KIEZBOX_CONTROL_APP, &meshtastic_KiezboxMessage_msg),
@@ -176,12 +177,18 @@ int32_t KiezboxControlModule::runOnce()
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
     // TODO: maybe synt this with rtc somehow?
-    LOG_DEBUG("VEDirect debug\n");
-    ve::VEMessage msg;
+    LOG_DEBUG("VEDirect preparing message\n");
+    ve::VEMessage msg(ve::command::get, ve::id::battery_max_current);
+    ve::VEMessage resp;
+    vedirect.discard();
     msg.msg_generate();
-    LOG_DEBUG("VEMessage debug: %s\n", msg.get_hex_command().c_str());
     vedirect.send(msg);
-    vedirect.debug();
+    vedirect.debug(resp);
+    if(resp.msg_decode()) {
+        resp.resp_debug();
+    } else {
+        LOG_DEBUG("VEDirect unable to decode\n");
+    }
     return std::min(std::max(KB_STATUS_MIN,moduleConfig.kiezbox_control.status_interval),KB_STATUS_MAX);
 }
 

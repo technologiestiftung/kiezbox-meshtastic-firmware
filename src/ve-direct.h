@@ -38,7 +38,7 @@ enum class response : uint8_t {
     get = 0x7,
     set = 0x8,
     reserved_9 = 0x9,
-    reserved_a = 0xa,
+    async = 0xa,
     reserved_b = 0xb,
     reserved_c = 0xc,
     reserved_d = 0xd,
@@ -278,8 +278,8 @@ class VEMessage
     ve::command command;
     ve::response response;
     ve::id id;
-    ve::flags_union flags;
     ve::VEValue value;
+    ve::flags_union flags;
     uint8_t checksum = 0x55;
     std::string hex_command;
     std::stringstream hex_response;
@@ -377,11 +377,15 @@ class VEMessage
     }
 public:
     VEMessage();
+    VEMessage(ve::command command, ve::id id, VEValue value = VEValue(), flags_union flags = flags_union());
     bool msg_generate();
+    bool msg_generate(ve::command command, ve::id id, VEValue value = VEValue(), flags_union flags = flags_union());
     const std::string& get_hex_command() const {
         return hex_command;
     }
+    bool msg_decode();
     bool msg_decode(const std::string& msg);
+    void resp_debug();
 };
 
 class VEDirect
@@ -392,11 +396,13 @@ class VEDirect
 
 public:
     VEDirect();
-    void debug();
+    void debug(VEMessage &vemessage);
+    void discard();
     //void command_get(uint16_t id,uint8_t flags=0x0);
     void command_product_id();
     void command_get();
     void send(VEMessage& vemessage);
+    bool receive_next(VEMessage& vemessage);
     void generate_send(VEMessage& vemessage);
     void send(const std::string& message);
 };
