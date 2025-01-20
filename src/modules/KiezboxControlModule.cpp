@@ -173,7 +173,7 @@ int32_t KiezboxControlModule::runOnce()
                     r.update.sensor.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
                     // Battery voltage
                     r.update.sensor.values.has_battery_voltage = true;
-                    r.update.sensor.values.battery_voltage = static_cast<int32_t>(((analogReadMilliVolts(KB_BAT_PIN) * 1480)/1000));
+                    r.update.sensor.values.battery_voltage = static_cast<int32_t>(((analogReadMilliVolts(KB_BAT_PIN) * 1507)/1000));
                     if (!bme680.endReading()) {
                         LOG_DEBUG("bme680 failed to read.\n");
                     } else {

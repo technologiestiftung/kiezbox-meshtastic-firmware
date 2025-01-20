@@ -1,6 +1,7 @@
 // Heltec Wireless Stick Lite v3
-#define I2C_SCL 46
-#define I2C_SDA 45
+// SCL = 42 and SDA = 41 for board heltec_wifi_lora_32_V3, which is base for the wsl v3
+#define I2C_SCL SCL
+#define I2C_SDA SDA
 
 #define LED_PIN LED
 
@@ -42,7 +43,7 @@
 #define KB_ONEWIRE_PIN 5
 #define KB_STATUS_MIN 30000 // 30 Seconds
 #define KB_STATUS_MAX 3600000 // 1 Hour
-#define KB_POWER_PIN_DEFAULT 3
+#define KB_POWER_PIN_DEFAULT 15
 #define KB_VED_RXPIN 18
 #define KB_VED_TXPIN 17
 #define KB_VED_BAUD 19200
@@ -50,4 +51,7 @@
 #define KB_DUST_BAUD 9600
 #define KB_DUST_RXPIN 48
 #define KB_DUST_TXPIN 47
-#define KB_BAT_PIN 3
+#define KB_BAT_PIN 2
+
+// TODO: evaluate excludes for size, speed and stability
+#define MESHTASTIC_EXCLUDE_GPS 1
