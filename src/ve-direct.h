@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <charconv>
 
 namespace ve
 {
@@ -45,6 +46,14 @@ enum class response : uint8_t {
     reserved_e = 0xe,
     reserved_f = 0xf
 };
+
+// Comparison commands and responses raw
+inline bool operator==(command c, response r) {
+    return static_cast<uint8_t>(c) == static_cast<uint8_t>(r);
+}
+inline bool operator==(response r, command c) {
+    return c == r;
+}
 
 enum class id : uint16_t {
     zero = 0x0000,
@@ -96,7 +105,7 @@ enum class id : uint16_t {
     charger_current = 0xEDD7,
     charger_voltage = 0xEDD5,
     charger_state_additional_info = 0xEDD4,
-    yield_total = 0xEDD3,
+    yield_today = 0xEDD3,
     power_max_today = 0xEDD2,
     yield_yesterday = 0xEDD1,
     power_max_yesterday = 0xEDD0,
@@ -205,7 +214,15 @@ const std::map<const id,const id_metadata> id_metadata_map = {
     {id::battery_equalisation_duration,         {data_type::uint16, 0.01, "hours"}},
     {id::battery_rebulk_voltage_offset,         {data_type::uint16, 0.01, "V"}},
     {id::battery_low_temp_level,                {data_type::sint16, 0.01, "°C"}},
-    {id::battery_voltage_compensation,          {data_type::uint16, 0.01, "V"}}
+    {id::battery_voltage_compensation,          {data_type::uint16, 0.01, "V"}},
+    // Charger data registers
+    //TODO: implement all values we need
+    {id::panel_voltage,                         {data_type::uint16, 0.01, "V"}},
+    {id::panel_power,                           {data_type::uint32, 0.01, "W"}},
+    {id::yield_today,                           {data_type::uint16, 0.01, "kWH"}}, // This was uint32 up to firmware version 1.12, safe to ignore i hope, why would you change this, save 2 bytes for a binary incompatibility? at least v1.12 is really ancient
+    {id::yield_system,                          {data_type::uint32, 0.01, "kWH"}}, // but this stayed uint32 ...
+    {id::charger_voltage,                       {data_type::uint16, 0.01, "V"}},
+    {id::charger_current,                       {data_type::uint16, 0.1, "A"}}
 };
 
 const id_metadata* get_id_metadata(const id id);
@@ -228,7 +245,7 @@ struct VEValue
     VEValue() : type(data_type::none), sint32_value(0) {}
 
     // Templated constructor for initializing with a specific type and value
-    // TODO: add sting type handling (or not? check in the docs if setting strings is even needed)
+    // TODO: add string type handling (or not? check in the docs if setting strings is even needed)
     // TODO: rework the type handling, this feels bad :/
     template<data_type T, typename ValueType>
     VEValue(ValueType value) : type(T) {
@@ -275,20 +292,29 @@ struct VEValue
 
 class VEMessage
 {
-    ve::command command;
-    ve::response response;
-    ve::id id;
-    ve::VEValue value;
-    ve::flags_union flags;
-    uint8_t checksum = 0x55;
-    std::string hex_command;
-    std::stringstream hex_response;
+    struct command_t {
+        ve::command code = ve::command::zero;
+        ve::id id = ve::id::zero;
+        ve::VEValue value = VEValue();
+        ve::flags_union flags = ve::flags_union();
+        uint8_t checksum = 0x55;
+        command_t(ve::command c, ve::id i, ve::VEValue v = VEValue(), ve::flags_union f = ve::flags_union())
+            : code(c), id(i), value(v), flags(f) {}
+        command_t() {}
+    } command;
+    struct {
+        ve::response code = ve::response::zero;
+        ve::id id = ve::id::zero;
+        ve::VEValue value = VEValue();
+        ve::flags_union flags = ve::flags_union();
+        uint8_t checksum = 0x55;
+    } response;
     template <typename T>
     void update_checksum(T val) {
         using view_t = uint8_t[sizeof(T)];
         const view_t& view = *(view_t*)&val;
         for(const uint8_t& byte : view) {
-            checksum -= byte;
+            command.checksum -= byte;
         }
     }
     template <typename T ,size_t N>
@@ -304,13 +330,9 @@ class VEMessage
         }
     }
     template <typename T>
-    bool msg_append_hex(T val,size_t width) {
-        std::stringstream ss;
-        ss << std::uppercase << std::hex << std::setfill('0');
-        int val_le;
-        //TODO: test if endian swap works as intended (for every size!)
-        // https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html#index-_005f_005fbuiltin_005fbswap16
-        switch(sizeof(T)) {
+    bool msg_append_hex(T val, size_t width) {
+        uint32_t val_le;
+        switch (sizeof(T)) {
             case 1:
                 val_le = static_cast<uint8_t>(val);
                 break;
@@ -323,8 +345,17 @@ class VEMessage
             default:
                 return false;
         }
-        ss << std::setw(width) << val_le;
-        hex_command += ss.str();
+        // Allocate buffer with space for null terminator
+        char buffer[width + 1];
+        int written = snprintf(buffer, sizeof(buffer), "%0*X", static_cast<int>(width), val_le);
+
+        // Check if snprintf succeeded, both should not occur
+        if (written < 0 || written > static_cast<int>(width)) {
+            return false;
+        }
+
+        // Append the exact number of requested characters
+        hex_command.append(buffer, width);
         return true;
     }
     template <typename T>
@@ -348,13 +379,13 @@ class VEMessage
         return ret;
     }
     template <typename T>
-    bool msg_decode_hex(T& val,size_t width) {
-        int val_le;
-        hex_response >> std::setw(width) >> std::hex >> val_le;
-        if (hex_response.fail()) {
-            //TODO: debug message
-            return false;
-        }
+    bool msg_decode_hex(T& val, size_t offs, size_t width) {
+        int val_le{};
+        std::string sub;
+        if ( (offs + width) > hex_response.size()) return false;
+        sub = hex_response.substr(offs, width);
+        val_le = std::stoi(sub, nullptr,16);
+        //TODO: handle conversion error?
         //TODO: test if endian swap works as intended (for every size!)
         switch(sizeof(T)) {
             case 1:
@@ -372,40 +403,39 @@ class VEMessage
         return true;
     }
     template <typename T>
-    bool msg_decode_hex(T& val) {
-        return msg_decode_hex(val, sizeof(T)*2);
+    bool msg_decode_hex(T& val, size_t offs) {
+        return msg_decode_hex(val, offs, sizeof(T)*2);
     }
 public:
+    std::string hex_command;
+    std::string hex_response;
     VEMessage();
-    VEMessage(ve::command command, ve::id id, VEValue value = VEValue(), flags_union flags = flags_union());
+    VEMessage(ve::command c, ve::id i, ve::VEValue v = VEValue(), ve::flags_union f = ve::flags_union());
     bool msg_generate();
-    bool msg_generate(ve::command command, ve::id id, VEValue value = VEValue(), flags_union flags = flags_union());
-    const std::string& get_hex_command() const {
-        return hex_command;
-    }
+    bool msg_generate(ve::command c, ve::id i, ve::VEValue v = VEValue(), ve::flags_union f = ve::flags_union());
     bool msg_decode();
     bool msg_decode(const std::string& msg);
     void resp_debug();
+    bool resp_check();
+    uint32_t get_resp_value();
 };
 
 class VEDirect
 {
-    char buffer[KB_VED_BUFFER_SIZE];
-    volatile uint8_t bufferIndex = 0;
     HardwareSerial *ve_serial;
-
 public:
     VEDirect();
     void debug(VEMessage &vemessage);
+    void debug_next(VEMessage &vemessage);
     void discard();
-    //void command_get(uint16_t id,uint8_t flags=0x0);
     void command_product_id();
     void command_get();
     void send(VEMessage& vemessage);
     bool receive_next(VEMessage& vemessage);
+    bool receive_response(VEMessage& vemessage);
     void generate_send(VEMessage& vemessage);
     void send(const std::string& message);
+    bool get_value(ve::id id, int32_t& int_value);
 };
-
 
 }// namespace ve

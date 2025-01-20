@@ -107,7 +107,32 @@ int32_t KiezboxControlModule::runOnce()
             r.update.core.values.has_temp_out = true;
             r.update.core.values.temp_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
             // mppt measurements
-            // TODO: and maybe convert to hex protocol to recude delay and ressource usage
+            if(vedirect.get_value(ve::id::panel_voltage ,r.update.core.values.solar_voltage)){
+                r.update.core.values.solar_voltage *= 10;
+                r.update.core.values.has_solar_voltage = true;
+            }
+            if(vedirect.get_value(ve::id::panel_power ,r.update.core.values.solar_power)){
+                r.update.core.values.solar_power *= 10;
+                r.update.core.values.has_solar_power = true;
+            }
+            if(vedirect.get_value(ve::id::yield_today ,r.update.core.values.solar_energy_day)){
+                r.update.core.values.solar_energy_day *= 10;
+                r.update.core.values.has_solar_energy_day = true;
+            }
+            if(vedirect.get_value(ve::id::yield_system ,r.update.core.values.solar_energy_total)){
+                r.update.core.values.solar_energy_total *= 10;
+                r.update.core.values.has_solar_energy_total = true;
+            }
+            //TODO: check if charger_current and voltage are really mapped to battery_current and voltage from ve.direct text protocol
+            if(vedirect.get_value(ve::id::charger_voltage ,r.update.core.values.battery_voltage)){
+                r.update.core.values.battery_voltage *= 10;
+                r.update.core.values.has_battery_voltage = true;
+            }
+            //TODO: check not 3 from the docs about battery current and load current
+            if(vedirect.get_value(ve::id::charger_current ,r.update.core.values.battery_current)){
+                r.update.core.values.battery_current *= 100;
+                r.update.core.values.has_battery_current = true;
+            }
             // Checking router power state by reading pin state
             r.update.core.has_router = true;
             r.update.core.router.powered = digitalRead(KB_POWER_PIN_DEFAULT);
@@ -176,19 +201,7 @@ int32_t KiezboxControlModule::runOnce()
         }
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
-    // TODO: maybe synt this with rtc somehow?
-    LOG_DEBUG("VEDirect preparing message\n");
-    ve::VEMessage msg(ve::command::get, ve::id::battery_max_current);
-    ve::VEMessage resp;
-    vedirect.discard();
-    msg.msg_generate();
-    vedirect.send(msg);
-    vedirect.debug(resp);
-    if(resp.msg_decode()) {
-        resp.resp_debug();
-    } else {
-        LOG_DEBUG("VEDirect unable to decode\n");
-    }
+    // TODO: maybe sync this with rtc somehow, to have all updates in sync? but this could also lead to more lora collisions?
     return std::min(std::max(KB_STATUS_MIN,moduleConfig.kiezbox_control.status_interval),KB_STATUS_MAX);
 }
 
