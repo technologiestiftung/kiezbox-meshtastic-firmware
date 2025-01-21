@@ -508,8 +508,8 @@ extern "C" {
 #define meshtastic_ModuleConfig_KiezboxControlConfig_mode_ENUMTYPE meshtastic_KiezboxMessage_Mode
 #define meshtastic_ModuleConfig_KiezboxControlConfig_dev_type_ENUMTYPE meshtastic_KiezboxMessage_DeviceType
 
-#define meshtastic_ModuleConfig_DetectionSensorConfig_detection_trigger_type_ENUMTYPE meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType
 
+#define meshtastic_ModuleConfig_DetectionSensorConfig_detection_trigger_type_ENUMTYPE meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType
 
 #define meshtastic_ModuleConfig_AudioConfig_bitrate_ENUMTYPE meshtastic_ModuleConfig_AudioConfig_Audio_Baud
 
@@ -534,6 +534,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_MQTTConfig_init_default {0, "", "", "", 0, 0, 0, "", 0, 0, false, meshtastic_ModuleConfig_MapReportSettings_init_default}
 #define meshtastic_ModuleConfig_MapReportSettings_init_default {0, 0}
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_init_default {0, 0, 0, {meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default, meshtastic_RemoteHardwarePin_init_default}}
+#define meshtastic_ModuleConfig_KiezboxControlConfig_init_default {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN, 0}
 #define meshtastic_ModuleConfig_NeighborInfoConfig_init_default {0, 0, 0}
 #define meshtastic_ModuleConfig_DetectionSensorConfig_init_default {0, 0, 0, 0, "", 0, _meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType_MIN, 0}
 #define meshtastic_ModuleConfig_AudioConfig_init_default {0, 0, _meshtastic_ModuleConfig_AudioConfig_Audio_Baud_MIN, 0, 0, 0, 0}
@@ -550,6 +551,7 @@ extern "C" {
 #define meshtastic_ModuleConfig_MQTTConfig_init_zero {0, "", "", "", 0, 0, 0, "", 0, 0, false, meshtastic_ModuleConfig_MapReportSettings_init_zero}
 #define meshtastic_ModuleConfig_MapReportSettings_init_zero {0, 0}
 #define meshtastic_ModuleConfig_RemoteHardwareConfig_init_zero {0, 0, 0, {meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero, meshtastic_RemoteHardwarePin_init_zero}}
+#define meshtastic_ModuleConfig_KiezboxControlConfig_init_zero {0, 0, 0, 0, 0, 0, 0, _meshtastic_KiezboxMessage_Mode_MIN, _meshtastic_KiezboxMessage_DeviceType_MIN, 0}
 #define meshtastic_ModuleConfig_NeighborInfoConfig_init_zero {0, 0, 0}
 #define meshtastic_ModuleConfig_DetectionSensorConfig_init_zero {0, 0, 0, 0, "", 0, _meshtastic_ModuleConfig_DetectionSensorConfig_TriggerType_MIN, 0}
 #define meshtastic_ModuleConfig_AudioConfig_init_zero {0, 0, _meshtastic_ModuleConfig_AudioConfig_Audio_Baud_MIN, 0, 0, 0, 0}
