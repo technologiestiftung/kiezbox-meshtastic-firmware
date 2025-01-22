@@ -24,7 +24,9 @@ typedef enum _meshtastic_KiezboxMessage_DeviceType {
     /* A dedicated sensor box */
     meshtastic_KiezboxMessage_DeviceType_sensor = 1,
     /* A info dipslay */
-    meshtastic_KiezboxMessage_DeviceType_display = 2
+    meshtastic_KiezboxMessage_DeviceType_display = 2,
+    /* The emergency button */
+    meshtastic_KiezboxMessage_DeviceType_button = 3
 } meshtastic_KiezboxMessage_DeviceType;
 
 typedef enum _meshtastic_KiezboxMessage_Request_Type {
@@ -195,8 +197,8 @@ extern "C" {
 #define _meshtastic_KiezboxMessage_Mode_ARRAYSIZE ((meshtastic_KiezboxMessage_Mode)(meshtastic_KiezboxMessage_Mode_emergency+1))
 
 #define _meshtastic_KiezboxMessage_DeviceType_MIN meshtastic_KiezboxMessage_DeviceType_core
-#define _meshtastic_KiezboxMessage_DeviceType_MAX meshtastic_KiezboxMessage_DeviceType_display
-#define _meshtastic_KiezboxMessage_DeviceType_ARRAYSIZE ((meshtastic_KiezboxMessage_DeviceType)(meshtastic_KiezboxMessage_DeviceType_display+1))
+#define _meshtastic_KiezboxMessage_DeviceType_MAX meshtastic_KiezboxMessage_DeviceType_button
+#define _meshtastic_KiezboxMessage_DeviceType_ARRAYSIZE ((meshtastic_KiezboxMessage_DeviceType)(meshtastic_KiezboxMessage_DeviceType_button+1))
 
 #define _meshtastic_KiezboxMessage_Request_Type_MIN meshtastic_KiezboxMessage_Request_Type_Update
 #define _meshtastic_KiezboxMessage_Request_Type_MAX meshtastic_KiezboxMessage_Request_Type_Update
