@@ -38,16 +38,20 @@
 #define SX126X_DIO3_TCXO_VOLTAGE 1.8
 
 // Kiezbox specific value
-#define KB_DHTPIN 4
-#define KB_DHTTYPE DHT22
-#define KB_ONEWIRE_PIN 5
+// General values
 #define KB_STATUS_MIN 30000 // 30 Seconds
 #define KB_STATUS_MAX 3600000 // 1 Hour
-#define KB_POWER_PIN_DEFAULT 15
+// Core specific definitions
+#define KB_DHTPIN 4
+#define KB_ONEWIRE_PIN 5
+#define KB_DHTTYPE DHT22
+#define KB_POWER_PIN_RESET 15
+#define KB_POWER_PIN_SET 16
 #define KB_VED_RXPIN 18
 #define KB_VED_TXPIN 17
 #define KB_VED_BAUD 19200
 #define KB_VED_BUFFER_SIZE 128
+// Sensor specific definitions
 #define KB_DUST_BAUD 9600
 #define KB_DUST_RXPIN 48
 #define KB_DUST_TXPIN 47

@@ -65,6 +65,10 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
      * Returns desired period for next invocation (or RUN_SAME for no change)
      */
     virtual int32_t runOnce() override;
+    void updateRouterPower();
+    void setRouterPower(bool state);
+    void initCore();
+    void initSensor();
 };
 
 extern KiezboxControlModule kiezboxControlModule;

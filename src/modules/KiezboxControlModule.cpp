@@ -10,37 +10,67 @@
 KiezboxControlModule::KiezboxControlModule()
     : ProtobufModule("kiezboxcontrol", meshtastic_PortNum_KIEZBOX_CONTROL_APP, &meshtastic_KiezboxMessage_msg),
       concurrency::OSThread("KiezboxControlModule"),
+      // dht has to be constructed here, but the KB_DHTPIN isn't actually used/initialized
+      // until dht.begin() so it is fine to reuse
       dht(KB_DHTPIN, KB_DHTTYPE),
-      onewire(KB_ONEWIRE_PIN),
-      dallas(&onewire),
-      router_power_state(false),
+      onewire(),
+      dallas(),
+      router_power_state(true),
       sens_state(sens_state_t::sds_bootup),
+      // sds has to be constructed here, but Serial2 isn't actually used/initialized
+      // until initSernsor() is called so KB_DUST_RXPIN and KB_DUST_TXPIN are fine to reuse
       sds(Serial2)
 {
     // restrict to the gpio channel for rx
     boundChannel = Channels::kiezboxChannel;
+    // Generic peripherals, connected regardless of dev_type
     rtc.begin();
+    // Core specific devices
     if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         LOG_DEBUG("INITIALIZE: Core module\n");
-        dht.begin();
-        pinMode(KB_POWER_PIN_DEFAULT,OUTPUT);
-        // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
-        digitalWrite(KB_POWER_PIN_DEFAULT, router_power_state ? HIGH : LOW );
+        initCore();
     }
     if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
         LOG_DEBUG("INITIALIZE: Sensor module\n");
-        Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
-        if (!bme680.begin()) {
-            LOG_DEBUG("Failed to initialize BME680\n");
-        }
-        // Set up oversampling and filter initialization
-        // TODO: review parameter settings
-        bme680.setTemperatureOversampling(BME680_OS_8X);
-        bme680.setHumidityOversampling(BME680_OS_2X);
-        bme680.setPressureOversampling(BME680_OS_4X);
-        bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
-        bme680.setGasHeater(320, 150); // 320*C for 150 ms
+        initSensor();
     }
+}
+
+void KiezboxControlModule::initCore() {
+    dht.begin();
+    onewire.begin(KB_ONEWIRE_PIN);
+    dallas.setOneWire(&onewire);
+    pinMode(KB_POWER_PIN_RESET,OUTPUT);
+    pinMode(KB_POWER_PIN_SET,OUTPUT);
+    // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
+    updateRouterPower();
+}
+
+void KiezboxControlModule::initSensor() {
+    Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
+    if (!bme680.begin()) {
+        LOG_DEBUG("Failed to initialize BME680\n");
+    }
+    // Set up oversampling and filter initialization
+    // TODO: review parameter settings
+    bme680.setTemperatureOversampling(BME680_OS_8X);
+    bme680.setHumidityOversampling(BME680_OS_2X);
+    bme680.setPressureOversampling(BME680_OS_4X);
+    bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
+    bme680.setGasHeater(320, 150); // 320*C for 150 ms
+}
+
+void KiezboxControlModule::updateRouterPower() {
+    if(router_power_state != moduleConfig.kiezbox_control.router_power) {
+        LOG_DEBUG("Changing router power state to: %s\n", router_power_state ? "ON" : "OFF");
+        router_power_state = moduleConfig.kiezbox_control.router_power;
+        setRouterPower(router_power_state);
+    }
+}
+
+void KiezboxControlModule::setRouterPower(bool state) {
+    digitalWrite(KB_POWER_PIN_RESET, state ? HIGH : LOW );
+    digitalWrite(KB_POWER_PIN_SET, state ? LOW : HIGH );
 }
 
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *kb)
@@ -90,11 +120,7 @@ int32_t KiezboxControlModule::runOnce()
             r.update.meta.dev_type = moduleConfig.kiezbox_control.dev_type;
         }
         if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
-            if(router_power_state != moduleConfig.kiezbox_control.router_power) {
-                LOG_DEBUG("Changing router power state to: %s\n", router_power_state ? "ON" : "OFF");
-                router_power_state = moduleConfig.kiezbox_control.router_power;
-                digitalWrite(KB_POWER_PIN_DEFAULT, router_power_state ? HIGH : LOW );
-            }
+            updateRouterPower();
             // Internal sensors
             r.update.has_core = true;
             r.update.core.has_values = true;
@@ -135,7 +161,7 @@ int32_t KiezboxControlModule::runOnce()
             }
             // Checking router power state by reading pin state
             r.update.core.has_router = true;
-            r.update.core.router.powered = digitalRead(KB_POWER_PIN_DEFAULT);
+            r.update.core.router.powered = router_power_state;
             // RTC Time and Temperature
             r.update.core.values.has_temp_rtc = true;
             r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
