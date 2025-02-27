@@ -61,11 +61,12 @@ void KiezboxControlModule::initSensor() {
 }
 
 void KiezboxControlModule::updateRouterPower() {
+    LOG_DEBUG("Current router power state is: %s\n", router_power_state ? "ON" : "OFF");
     if(router_power_state != moduleConfig.kiezbox_control.router_power) {
-        LOG_DEBUG("Changing router power state to: %s\n", router_power_state ? "ON" : "OFF");
         router_power_state = moduleConfig.kiezbox_control.router_power;
-        setRouterPower(router_power_state);
+        LOG_DEBUG("New router power state is: %s\n", router_power_state ? "ON" : "OFF");
     }
+    setRouterPower(router_power_state);
 }
 
 void KiezboxControlModule::setRouterPower(bool state) {
