@@ -36,6 +36,11 @@ PB_BIND(meshtastic_KiezboxMessage_Sensor, meshtastic_KiezboxMessage_Sensor, AUTO
 PB_BIND(meshtastic_KiezboxMessage_SensorValues, meshtastic_KiezboxMessage_SensorValues, AUTO)
 
 
+PB_BIND(meshtastic_KiezboxMessage_Emergency, meshtastic_KiezboxMessage_Emergency, AUTO)
+
+
+
+
 
 
 

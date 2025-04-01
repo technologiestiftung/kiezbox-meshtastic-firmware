@@ -29,6 +29,19 @@ typedef enum _meshtastic_KiezboxMessage_DeviceType {
     meshtastic_KiezboxMessage_DeviceType_button = 3
 } meshtastic_KiezboxMessage_DeviceType;
 
+typedef enum _meshtastic_KiezboxMessage_EmergencyType {
+    /* Medical emergency */
+    meshtastic_KiezboxMessage_EmergencyType_medical = 0,
+    /* Fire emergency */
+    meshtastic_KiezboxMessage_EmergencyType_fire = 1,
+    /* Crime emergency */
+    meshtastic_KiezboxMessage_EmergencyType_crime = 2,
+    /* Sick emergency */
+    meshtastic_KiezboxMessage_EmergencyType_sick = 3,
+    /* Help emergency */
+    meshtastic_KiezboxMessage_EmergencyType_help = 4
+} meshtastic_KiezboxMessage_EmergencyType;
+
 typedef enum _meshtastic_KiezboxMessage_Request_Type {
     meshtastic_KiezboxMessage_Request_Type_Update = 0
 } meshtastic_KiezboxMessage_Request_Type;
@@ -175,7 +188,21 @@ typedef struct _meshtastic_KiezboxMessage_Update {
     meshtastic_KiezboxMessage_Core core;
     bool has_sensor;
     meshtastic_KiezboxMessage_Sensor sensor;
+    /* Unix timestamp ( in seconds ), when the measurements arrived at the database gateway */
+    bool has_arrival_time;
+    int64_t arrival_time;
 } meshtastic_KiezboxMessage_Update;
+
+typedef struct _meshtastic_KiezboxMessage_Emergency {
+    /* Type of the emergency */
+    meshtastic_KiezboxMessage_EmergencyType type;
+    /* ID of the button sending the emergency */
+    int32_t button_id;
+    /* Unix timestamp ( in seconds ), when the emergency happend */
+    int64_t unix_time;
+    /* Optional message describing what happened */
+    pb_callback_t message;
+} meshtastic_KiezboxMessage_Emergency;
 
 /* This message is used for
  KIEZBOX_CONTROL_APP PortNums. */
@@ -184,6 +211,8 @@ typedef struct _meshtastic_KiezboxMessage {
     meshtastic_KiezboxMessage_Update update;
     bool has_control;
     meshtastic_KiezboxMessage_Control control;
+    bool has_distress;
+    meshtastic_KiezboxMessage_Emergency distress;
 } meshtastic_KiezboxMessage;
 
 
@@ -199,6 +228,10 @@ extern "C" {
 #define _meshtastic_KiezboxMessage_DeviceType_MIN meshtastic_KiezboxMessage_DeviceType_core
 #define _meshtastic_KiezboxMessage_DeviceType_MAX meshtastic_KiezboxMessage_DeviceType_button
 #define _meshtastic_KiezboxMessage_DeviceType_ARRAYSIZE ((meshtastic_KiezboxMessage_DeviceType)(meshtastic_KiezboxMessage_DeviceType_button+1))
+
+#define _meshtastic_KiezboxMessage_EmergencyType_MIN meshtastic_KiezboxMessage_EmergencyType_medical
+#define _meshtastic_KiezboxMessage_EmergencyType_MAX meshtastic_KiezboxMessage_EmergencyType_help
+#define _meshtastic_KiezboxMessage_EmergencyType_ARRAYSIZE ((meshtastic_KiezboxMessage_EmergencyType)(meshtastic_KiezboxMessage_EmergencyType_help+1))
 
 #define _meshtastic_KiezboxMessage_Request_Type_MIN meshtastic_KiezboxMessage_Request_Type_Update
 #define _meshtastic_KiezboxMessage_Request_Type_MAX meshtastic_KiezboxMessage_Request_Type_Update
@@ -218,28 +251,32 @@ extern "C" {
 
 
 
+#define meshtastic_KiezboxMessage_Emergency_type_ENUMTYPE meshtastic_KiezboxMessage_EmergencyType
+
 
 /* Initializer values for message structs */
-#define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_Update_init_default, false, meshtastic_KiezboxMessage_Control_init_default}
+#define meshtastic_KiezboxMessage_init_default   {false, meshtastic_KiezboxMessage_Update_init_default, false, meshtastic_KiezboxMessage_Control_init_default, false, meshtastic_KiezboxMessage_Emergency_init_default}
 #define meshtastic_KiezboxMessage_Meta_init_default {false, 0, false, 0, false, 0, false, _meshtastic_KiezboxMessage_DeviceType_MIN}
 #define meshtastic_KiezboxMessage_Request_init_default {false, meshtastic_KiezboxMessage_Meta_init_default, false, _meshtastic_KiezboxMessage_Request_Type_MIN}
 #define meshtastic_KiezboxMessage_Control_init_default {0, {_meshtastic_KiezboxMessage_Mode_MIN}}
-#define meshtastic_KiezboxMessage_Update_init_default {false, meshtastic_KiezboxMessage_Meta_init_default, 0, false, meshtastic_KiezboxMessage_Core_init_default, false, meshtastic_KiezboxMessage_Sensor_init_default}
+#define meshtastic_KiezboxMessage_Update_init_default {false, meshtastic_KiezboxMessage_Meta_init_default, 0, false, meshtastic_KiezboxMessage_Core_init_default, false, meshtastic_KiezboxMessage_Sensor_init_default, false, 0}
 #define meshtastic_KiezboxMessage_Core_init_default {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_default, false, meshtastic_KiezboxMessage_CoreValues_init_default}
 #define meshtastic_KiezboxMessage_Router_init_default {0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define meshtastic_KiezboxMessage_CoreValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Sensor_init_default {false, meshtastic_KiezboxMessage_SensorValues_init_default}
 #define meshtastic_KiezboxMessage_SensorValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
-#define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_Update_init_zero, false, meshtastic_KiezboxMessage_Control_init_zero}
+#define meshtastic_KiezboxMessage_Emergency_init_default {_meshtastic_KiezboxMessage_EmergencyType_MIN, 0, 0, {{NULL}, NULL}}
+#define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_Update_init_zero, false, meshtastic_KiezboxMessage_Control_init_zero, false, meshtastic_KiezboxMessage_Emergency_init_zero}
 #define meshtastic_KiezboxMessage_Meta_init_zero {false, 0, false, 0, false, 0, false, _meshtastic_KiezboxMessage_DeviceType_MIN}
 #define meshtastic_KiezboxMessage_Request_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, false, _meshtastic_KiezboxMessage_Request_Type_MIN}
 #define meshtastic_KiezboxMessage_Control_init_zero {0, {_meshtastic_KiezboxMessage_Mode_MIN}}
-#define meshtastic_KiezboxMessage_Update_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, 0, false, meshtastic_KiezboxMessage_Core_init_zero, false, meshtastic_KiezboxMessage_Sensor_init_zero}
+#define meshtastic_KiezboxMessage_Update_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, 0, false, meshtastic_KiezboxMessage_Core_init_zero, false, meshtastic_KiezboxMessage_Sensor_init_zero, false, 0}
 #define meshtastic_KiezboxMessage_Core_init_zero {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_zero, false, meshtastic_KiezboxMessage_CoreValues_init_zero}
 #define meshtastic_KiezboxMessage_Router_init_zero {0, {{NULL}, NULL}, {{NULL}, NULL}}
 #define meshtastic_KiezboxMessage_CoreValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Sensor_init_zero {false, meshtastic_KiezboxMessage_SensorValues_init_zero}
 #define meshtastic_KiezboxMessage_SensorValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_Emergency_init_zero {_meshtastic_KiezboxMessage_EmergencyType_MIN, 0, 0, {{NULL}, NULL}}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define meshtastic_KiezboxMessage_Meta_box_id_tag 1
@@ -285,17 +322,25 @@ extern "C" {
 #define meshtastic_KiezboxMessage_Update_unix_time_tag 2
 #define meshtastic_KiezboxMessage_Update_core_tag 3
 #define meshtastic_KiezboxMessage_Update_sensor_tag 4
+#define meshtastic_KiezboxMessage_Update_arrival_time_tag 5
+#define meshtastic_KiezboxMessage_Emergency_type_tag 1
+#define meshtastic_KiezboxMessage_Emergency_button_id_tag 2
+#define meshtastic_KiezboxMessage_Emergency_unix_time_tag 3
+#define meshtastic_KiezboxMessage_Emergency_message_tag 4
 #define meshtastic_KiezboxMessage_update_tag     4
 #define meshtastic_KiezboxMessage_control_tag    5
+#define meshtastic_KiezboxMessage_distress_tag   6
 
 /* Struct field encoding specification for nanopb */
 #define meshtastic_KiezboxMessage_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  update,            4) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  control,           5)
+X(a, STATIC,   OPTIONAL, MESSAGE,  control,           5) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  distress,          6)
 #define meshtastic_KiezboxMessage_CALLBACK NULL
 #define meshtastic_KiezboxMessage_DEFAULT NULL
 #define meshtastic_KiezboxMessage_update_MSGTYPE meshtastic_KiezboxMessage_Update
 #define meshtastic_KiezboxMessage_control_MSGTYPE meshtastic_KiezboxMessage_Control
+#define meshtastic_KiezboxMessage_distress_MSGTYPE meshtastic_KiezboxMessage_Emergency
 
 #define meshtastic_KiezboxMessage_Meta_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, UINT32,   box_id,            1) \
@@ -327,7 +372,8 @@ X(a, STATIC,   ONEOF,    INT32,    (set,status_interval,set.status_interval),   
 X(a, STATIC,   OPTIONAL, MESSAGE,  meta,              1) \
 X(a, STATIC,   SINGULAR, INT64,    unix_time,         2) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  core,              3) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  sensor,            4)
+X(a, STATIC,   OPTIONAL, MESSAGE,  sensor,            4) \
+X(a, STATIC,   OPTIONAL, INT64,    arrival_time,      5)
 #define meshtastic_KiezboxMessage_Update_CALLBACK NULL
 #define meshtastic_KiezboxMessage_Update_DEFAULT NULL
 #define meshtastic_KiezboxMessage_Update_meta_MSGTYPE meshtastic_KiezboxMessage_Meta
@@ -383,6 +429,14 @@ X(a, STATIC,   OPTIONAL, INT32,    battery_voltage,   9)
 #define meshtastic_KiezboxMessage_SensorValues_CALLBACK NULL
 #define meshtastic_KiezboxMessage_SensorValues_DEFAULT NULL
 
+#define meshtastic_KiezboxMessage_Emergency_FIELDLIST(X, a) \
+X(a, STATIC,   SINGULAR, UENUM,    type,              1) \
+X(a, STATIC,   SINGULAR, INT32,    button_id,         2) \
+X(a, STATIC,   SINGULAR, INT64,    unix_time,         3) \
+X(a, CALLBACK, OPTIONAL, STRING,   message,           4)
+#define meshtastic_KiezboxMessage_Emergency_CALLBACK pb_default_field_callback
+#define meshtastic_KiezboxMessage_Emergency_DEFAULT NULL
+
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_msg;
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_Meta_msg;
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_Request_msg;
@@ -393,6 +447,7 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_Router_msg;
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_CoreValues_msg;
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_Sensor_msg;
 extern const pb_msgdesc_t meshtastic_KiezboxMessage_SensorValues_msg;
+extern const pb_msgdesc_t meshtastic_KiezboxMessage_Emergency_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define meshtastic_KiezboxMessage_fields &meshtastic_KiezboxMessage_msg
@@ -405,12 +460,14 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_SensorValues_msg;
 #define meshtastic_KiezboxMessage_CoreValues_fields &meshtastic_KiezboxMessage_CoreValues_msg
 #define meshtastic_KiezboxMessage_Sensor_fields &meshtastic_KiezboxMessage_Sensor_msg
 #define meshtastic_KiezboxMessage_SensorValues_fields &meshtastic_KiezboxMessage_SensorValues_msg
+#define meshtastic_KiezboxMessage_Emergency_fields &meshtastic_KiezboxMessage_Emergency_msg
 
 /* Maximum encoded size of messages (where known) */
 /* meshtastic_KiezboxMessage_size depends on runtime parameters */
 /* meshtastic_KiezboxMessage_Update_size depends on runtime parameters */
 /* meshtastic_KiezboxMessage_Core_size depends on runtime parameters */
 /* meshtastic_KiezboxMessage_Router_size depends on runtime parameters */
+/* meshtastic_KiezboxMessage_Emergency_size depends on runtime parameters */
 #define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_CoreValues_size
 #define meshtastic_KiezboxMessage_Control_size   11
 #define meshtastic_KiezboxMessage_CoreValues_size 110
