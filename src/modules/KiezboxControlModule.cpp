@@ -42,6 +42,9 @@ void KiezboxControlModule::initCore() {
     dallas.setOneWire(&onewire);
     pinMode(KB_POWER_PIN_RESET,OUTPUT);
     pinMode(KB_POWER_PIN_SET,OUTPUT);
+    //TODO: This fixes a small power break on ESP bootup, we should really find a better/permanent solution
+    digitalWrite(KB_POWER_PIN_RESET, HIGH);
+    digitalWrite(KB_POWER_PIN_SET, HIGH);
     // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
     updateRouterPower();
 }
