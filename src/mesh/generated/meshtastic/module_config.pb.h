@@ -155,7 +155,8 @@ typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
     bool enabled;
     /* Sets the next (inteval) at which a status should be send */
     int32_t status_interval;
-    /* Override the default power pin */
+    /* Override the default power pin
+ DEPRECATED! power pin is fixed for now */
     int32_t power_pin_override;
     /* ID of the kiexbox */
     int32_t box_id;
@@ -165,9 +166,9 @@ typedef struct _meshtastic_ModuleConfig_KiezboxControlConfig {
     int32_t sens_id;
     /* Power state target of the connected router */
     bool router_power;
-    /* Mode target of the connected router */
+    /* Mode target for this kiezbox core (and connected router) */
     meshtastic_KiezboxMessage_Mode mode;
-    /* Mode target of the connected router */
+    /* Device type of this kiezbox */
     meshtastic_KiezboxMessage_DeviceType dev_type;
     /* Sets the warmup time for the sds dust sensor */
     int32_t sds_warmup_time;
