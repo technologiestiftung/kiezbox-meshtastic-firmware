@@ -73,32 +73,141 @@ void KiezboxControlModule::updateRouterPower() {
 }
 
 void KiezboxControlModule::setRouterPower(bool state) {
-    digitalWrite(KB_POWER_PIN_RESET, state ? HIGH : LOW );
-    digitalWrite(KB_POWER_PIN_SET, state ? LOW : HIGH );
+    if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
+        digitalWrite(KB_POWER_PIN_RESET, state ? HIGH : LOW );
+        digitalWrite(KB_POWER_PIN_SET, state ? LOW : HIGH );
+    } else {
+        LOG_DEBUG("Rejected setting router power, as dev_type is not core! mode: %sd\n", moduleConfig.kiezbox_control.dev_type);
+    }
+}
+
+void KiezboxControlModule::reboot(int32_t seconds)
+{
+    LOG_INFO("Reboot in %d seconds", seconds);
+    screen->startAlert("Rebooting...");
+    rebootAtMsec = (seconds < 0) ? 0 : (millis() + seconds * 1000);
 }
 
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *kb)
 {
-    assert(kb);
+    if (kb == NULL) {
+        LOG_DEBUG("Kiezboxcontrol: no kiezbox message to handle");
+        return true;
+    } else {
+        LOG_DEBUG("Kiezboxcontrol: handling kiezbox message");
+    }
     bool fromOthers = mp.from != 0 && mp.from != nodeDB->getNodeNum();
+    // TODO: find out if this check is really needed?
     if (mp.which_payload_variant != meshtastic_MeshPacket_decoded_tag) {
         return false;
     }
-    // Currently only handle messages recieved locally
-    if (!fromOthers) {
-        if (kb->has_control) {
-            switch(kb->control.which_set) {
+    if (kb->has_control) {
+        LOG_DEBUG("Kiezboxcontrol: handling kiezbox control message");
+        meshtastic_KiezboxMessage_Control &c = kb->control;
+        meshtastic_KiezboxMessage_Meta &m = c.meta;
+        bool affected = true;
+        if(m.has_dev_type && (m.dev_type != moduleConfig.kiezbox_control.dev_type)) {
+            LOG_DEBUG("Kiezboxcontrol: dev_type does not match",c.which_set);
+            affected = false;
+        }
+        if(m.has_box_id && (m.box_id != moduleConfig.kiezbox_control.box_id)) {
+            LOG_DEBUG("Kiezboxcontrol: box_id does not match",c.which_set);
+            affected = false;
+        }
+        if(m.has_dist_id && (m.dist_id != moduleConfig.kiezbox_control.dist_id)) {
+            LOG_DEBUG("Kiezboxcontrol: dist_id does not match",c.which_set);
+            affected = false;
+        }
+        if(m.has_sens_id && (m.sens_id != moduleConfig.kiezbox_control.sens_id)) {
+            LOG_DEBUG("Kiezboxcontrol: sens_id does not match",c.which_set);
+            affected = false;
+        }
+        if (affected) {
+            LOG_DEBUG("Kiezboxcontrol: accepted control message of type %d",c.which_set);
+            switch(c.which_set) {
                 case meshtastic_KiezboxMessage_Control_unix_time_tag:
-                    rtc.adjust(DateTime(kb->control.set.unix_time));
+                    // Only accept time updates from local/serial connection
+                    //TODO: check if it is a good idea to accept time updates fromt the LoRa mesh? (better than nothing?)
+                    if (!fromOthers) {
+                        rtc.adjust(DateTime(c.set.unix_time));
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_mode_tag:
+                    moduleConfig.kiezbox_control.mode = c.set.mode;
+                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    break;
+                case meshtastic_KiezboxMessage_Control_router_power_tag:
+                    moduleConfig.kiezbox_control.router_power = c.set.router_power;
+                    // apply power update immediately
+                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    updateRouterPower();
+                    break;
+                case meshtastic_KiezboxMessage_Control_status_interval_tag:
+                    moduleConfig.kiezbox_control.status_interval = c.set.status_interval;
+                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    // will be applied at next runOnce loop
+                    break;
+                case meshtastic_KiezboxMessage_Control_sds_warmup_time_tag:
+                    moduleConfig.kiezbox_control.sds_warmup_time = c.set.sds_warmup_time;
+                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    // will be applied at next runOnce loop
+                    break;
+                case meshtastic_KiezboxMessage_Control_box_id_tag:
+                    if (!fromOthers) {
+                        moduleConfig.kiezbox_control.box_id = c.set.box_id;
+                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_dist_id_tag:
+                    if (!fromOthers) {
+                        moduleConfig.kiezbox_control.dist_id = c.set.dist_id;
+                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_sens_id_tag:
+                    if (!fromOthers) {
+                        moduleConfig.kiezbox_control.sens_id = c.set.sens_id;
+                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_dev_type_tag:
+                    if (!fromOthers) {
+                        moduleConfig.kiezbox_control.dev_type = c.set.dev_type;
+                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        // rebooting as device type changes requires proper initialization
+                        reboot(3);
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_enabled_tag:
+                    moduleConfig.kiezbox_control.enabled = c.set.enabled;
+                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    // will be applied at next runOnce loop
+                    break;
+                case meshtastic_KiezboxMessage_Control_button_id_tag:
+                    if (!fromOthers) {
+                        moduleConfig.kiezbox_control.button_id = c.set.button_id;
+                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
                     break;
                 default:
-                    return false;
+                    LOG_DEBUG("unhandled kiezbox control message of type %d\n",c.which_set);
+                    return true;
             }
-        } else {
-            return false;
         }
     }
-    // we handle Kiezbox Messages, so always return true
+    // we handled the kiezbox messages successfully, so we stop message parsing by returning true
     return true;
 }
 

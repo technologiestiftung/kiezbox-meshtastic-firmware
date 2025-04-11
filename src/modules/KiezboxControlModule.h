@@ -69,6 +69,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     void setRouterPower(bool state);
     void initCore();
     void initSensor();
+    void reboot(int32_t seconds);
 };
 
 extern KiezboxControlModule kiezboxControlModule;
