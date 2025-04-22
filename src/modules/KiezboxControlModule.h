@@ -20,6 +20,9 @@
 // BME 680
 #include <Adafruit_BME680.h>
 
+// SPI for Display
+#include <SPI.h>
+
 enum class sens_state_t {
     sds_bootup = 0,
     sds_done = 1,
@@ -42,6 +45,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     sens_state_t sens_state;
     SdsDustSensor sds;
     Adafruit_BME680 bme680;
+    SPIClass *hspi = NULL;
 
   public:
     /** Constructor

@@ -6,6 +6,7 @@
 #include "configuration.h"
 #include "main.h"
 #include "ve-direct.h"
+#include "SPI.h"
 
 KiezboxControlModule::KiezboxControlModule()
     : ProtobufModule("kiezboxcontrol", meshtastic_PortNum_KIEZBOX_CONTROL_APP, &meshtastic_KiezboxMessage_msg),
@@ -34,6 +35,10 @@ KiezboxControlModule::KiezboxControlModule()
         LOG_DEBUG("INITIALIZE: Sensor module\n");
         initSensor();
     }
+    hspi = new SPIClass(HSPI);
+    hspi->begin(KB_DISP_SCK, KB_DISP_MISO, KB_DISP_MOSI, KB_DISP_CS); //SCLK, MISO, MOSI, SS
+    pinMode(hspi->pinSS(), OUTPUT); //HSPI SS
+    digitalWrite(hspi->pinSS(), HIGH);
 }
 
 void KiezboxControlModule::initCore() {
@@ -211,8 +216,17 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
     return true;
 }
 
+void spiCommand(SPIClass *spi, byte data) {
+  //use it as you would the regular arduino SPI API
+  spi->beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+  spi->transfer(data);
+  spi->endTransaction();
+}
+
 int32_t KiezboxControlModule::runOnce()
 {
+    //TODO: this is just for testing the SPI. connect SPI to display
+    spiCommand(hspi, 0b11001100);
     // Update router power if it should be changed
     // TODO: maybe change this to be immediate on setting change?
     // Broadcast sensor values

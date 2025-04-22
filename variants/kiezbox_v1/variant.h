@@ -56,6 +56,11 @@
 #define KB_DUST_RXPIN 48
 #define KB_DUST_TXPIN 47
 #define KB_BAT_PIN 2
+// Display specific definitions
+#define KB_DISP_SCK 40
+#define KB_DISP_MISO 42
+#define KB_DISP_MOSI 41
+#define KB_DISP_CS 39
 
 // TODO: evaluate excludes for size, speed and stability
 #define MESHTASTIC_EXCLUDE_GPS 1
