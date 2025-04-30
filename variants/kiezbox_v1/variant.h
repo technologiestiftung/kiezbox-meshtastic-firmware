@@ -45,8 +45,8 @@
 #define KB_DHTPIN 4
 #define KB_ONEWIRE_PIN 5
 #define KB_DHTTYPE DHT22
-#define KB_POWER_PIN_RESET 15
-#define KB_POWER_PIN_SET 16
+#define KB_POWER_PIN_RESET 34
+#define KB_POWER_PIN_SET 33
 #define KB_VED_RXPIN 18
 #define KB_VED_TXPIN 17
 #define KB_VED_BAUD 19200
