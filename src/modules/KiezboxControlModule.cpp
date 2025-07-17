@@ -332,8 +332,15 @@ int32_t KiezboxControlModule::runOnce()
         if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
              ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_done ) ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);
-            LOG_DEBUG("Broadcasting Kiezbox Message\n");
-            service->sendToMesh(p, RX_SRC_LOCAL, true);
+            meshtastic_Channel &sendChannel = channels.getByName(Channels::kiezboxChannel);
+            if ( strncmp(sendChannel.settings.name,Channels::kiezboxChannel,12) == 0 ) {
+                p->channel = sendChannel.index;
+                LOG_DEBUG("Broadcasting Kiezbox Message (to channel %d)\n", p->channel);
+                service->sendToMesh(p, RX_SRC_LOCAL, true);
+            } else {
+                LOG_DEBUG("There seems to be no channel named \"kiezbox\" (on index %d). skip sending.\n", p->channel);
+                service->releaseToPool(p);
+            }
         }
         if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_bootup ) {
             sens_state = sens_state_t::sds_done;
