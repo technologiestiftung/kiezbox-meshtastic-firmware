@@ -84,6 +84,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     void reboot(int32_t seconds);
     void loadConfig();
     bool saveConfig();
+    bool isTarget(const meshtastic_KiezboxMessage_Meta &m);
 };
 
 extern KiezboxControlModule kiezboxControlModule;

@@ -115,6 +115,27 @@ bool KiezboxControlModule::saveConfig()
                              &kb_config);
 }
 
+bool KiezboxControlModule::isTarget(const meshtastic_KiezboxMessage_Meta &m)
+{
+    if (m.has_dev_type && (m.dev_type != kb_config.dev_type)) {
+        LOG_DEBUG("Kiezboxcontrol: dev_type does not match");
+        return false;
+    }
+    if (m.has_box_id && (m.box_id != kb_config.box_id)) {
+        LOG_DEBUG("Kiezboxcontrol: box_id does not match");
+        return false;
+    }
+    if (m.has_dist_id && (m.dist_id != kb_config.dist_id)) {
+        LOG_DEBUG("Kiezboxcontrol: dist_id does not match");
+        return false;
+    }
+    if (m.has_sens_id && (m.sens_id != kb_config.sens_id)) {
+        LOG_DEBUG("Kiezboxcontrol: sens_id does not match");
+        return false;
+    }
+    return true;
+}
+
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *kb)
 {
     if (kb == NULL) {
@@ -128,28 +149,20 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
     if (mp.which_payload_variant != meshtastic_MeshPacket_decoded_tag) {
         return false;
     }
+    if (kb->has_request && isTarget(kb->request.meta)) {
+        if (kb->request.has_type && kb->request.type == meshtastic_KiezboxMessage_Request_Type_GetConfig) {
+            meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
+            r.has_config = true;
+            r.config = kb_config;
+            myReply = allocDataProtobuf(r);
+        } else {
+            LOG_DEBUG("Kiezboxcontrol: unhandled request of type %d", kb->request.type);
+        }
+    }
     if (kb->has_control) {
         LOG_DEBUG("Kiezboxcontrol: handling kiezbox control message");
         meshtastic_KiezboxMessage_Control &c = kb->control;
-        meshtastic_KiezboxMessage_Meta &m = c.meta;
-        bool affected = true;
-        if(m.has_dev_type && (m.dev_type != kb_config.dev_type)) {
-            LOG_DEBUG("Kiezboxcontrol: dev_type does not match",c.which_set);
-            affected = false;
-        }
-        if(m.has_box_id && (m.box_id != kb_config.box_id)) {
-            LOG_DEBUG("Kiezboxcontrol: box_id does not match",c.which_set);
-            affected = false;
-        }
-        if(m.has_dist_id && (m.dist_id != kb_config.dist_id)) {
-            LOG_DEBUG("Kiezboxcontrol: dist_id does not match",c.which_set);
-            affected = false;
-        }
-        if(m.has_sens_id && (m.sens_id != kb_config.sens_id)) {
-            LOG_DEBUG("Kiezboxcontrol: sens_id does not match",c.which_set);
-            affected = false;
-        }
-        if (affected) {
+        if (isTarget(c.meta)) {
             LOG_DEBUG("Kiezboxcontrol: accepted control message of type %d",c.which_set);
             switch(c.which_set) {
                 case meshtastic_KiezboxMessage_Control_unix_time_tag:
@@ -224,6 +237,21 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     if (!fromOthers) {
                         kb_config.button_id = c.set.button_id;
                         saveConfig();
+                    } else {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    }
+                    break;
+                case meshtastic_KiezboxMessage_Control_config_tag:
+                    if (!fromOthers) {
+                        bool dev_type_changed = c.set.config.dev_type != kb_config.dev_type;
+                        kb_config = c.set.config;
+                        saveConfig();
+                        if (dev_type_changed) {
+                            // rebooting as device type changes requires proper initialization
+                            reboot(3);
+                        } else {
+                            updateRouterPower();
+                        }
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
                     }
