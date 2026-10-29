@@ -16,9 +16,6 @@ KiezboxControlModule::KiezboxControlModule()
                      &meshtastic_KiezboxMessage_msg),
       concurrency::OSThread("KiezboxControlModule"),
       kb_config(meshtastic_KiezboxMessage_Config_init_zero),
-      // dht has to be constructed here, but the KB_DHTPIN isn't actually used/initialized
-      // until dht.begin() so it is fine to reuse
-      dht(KB_DHTPIN, KB_DHTTYPE),
       onewire(),
       dallas(),
       router_power_state(true),
@@ -44,7 +41,6 @@ KiezboxControlModule::KiezboxControlModule()
 }
 
 void KiezboxControlModule::initCore() {
-    dht.begin();
     onewire.begin(KB_ONEWIRE_PIN);
     dallas.setOneWire(&onewire);
     pinMode(KB_POWER_PIN_RESET,OUTPUT);
@@ -289,13 +285,8 @@ int32_t KiezboxControlModule::runOnce()
         }
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             updateRouterPower();
-            // Internal sensors
             r.update.has_core = true;
             r.update.core.has_values = true;
-            r.update.core.values.has_temp_in = true;
-            r.update.core.values.temp_in = static_cast<int32_t>(dht.readTemperature() * 1000.0);
-            r.update.core.values.has_humid_in = true;
-            r.update.core.values.humid_in = static_cast<int32_t>(dht.readHumidity() * 1000.0);
             // external sensors
             dallas.requestTemperatures(); 
             r.update.core.values.has_temp_out = true;

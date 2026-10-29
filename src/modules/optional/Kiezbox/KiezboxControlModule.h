@@ -6,7 +6,6 @@
 #include "mesh/generated/meshtastic/kiezbox_control.pb.h"
 
 // Sensor stuff
-#include "DHT.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -43,7 +42,6 @@ enum class sens_state_t {
 class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, private concurrency::OSThread
 {
     meshtastic_KiezboxMessage_Config kb_config;
-    DHT dht;
     OneWire onewire;
     DallasTemperature dallas;
     bool router_power_state;
