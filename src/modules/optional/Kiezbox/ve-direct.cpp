@@ -1,4 +1,5 @@
 #include "ve-direct.h"
+#if MESHTASTIC_INCLUDE_KIEZBOXCONTROL
 #include <cstdint>
 
 ve::VEDirect::VEDirect()
@@ -375,3 +376,4 @@ bool ve::VEMessage::resp_check() {
 }
 
 // (0x55 − (0x7+0xDB+0xED) ) & 0xff
+#endif

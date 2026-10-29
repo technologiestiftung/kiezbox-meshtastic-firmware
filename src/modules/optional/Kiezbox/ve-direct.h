@@ -1,5 +1,6 @@
 #pragma once
 #include "configuration.h"
+#if MESHTASTIC_INCLUDE_KIEZBOXCONTROL
 #include <sstream>
 #include <iomanip>
 #include <map>
@@ -439,3 +440,4 @@ public:
 };
 
 }// namespace ve
+#endif
