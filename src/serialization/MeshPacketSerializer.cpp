@@ -12,7 +12,6 @@
 #include "../mesh/generated/meshtastic/paxcount.pb.h"
 #endif
 #include "mesh/generated/meshtastic/remote_hardware.pb.h"
-#include "mesh/generated/meshtastic/kiezbox_control.pb.h"
 #include <sys/types.h>
 
 static const char *errStr = "Error decoding proto for %s message!";
@@ -410,19 +409,6 @@ std::string MeshPacketSerializer::JsonSerialize(const meshtastic_MeshPacket *mp,
                 }
             } else if (shouldLog) {
                 LOG_ERROR(errStr, "RemoteHardware");
-            }
-            break;
-        }
-        case meshtastic_PortNum_KIEZBOX_CONTROL_APP: {
-            msgType = "kiezboxcontrol";
-            meshtastic_KiezboxMessage scratch;
-            meshtastic_KiezboxMessage *decoded = NULL;
-            memset(&scratch, 0, sizeof(scratch));
-            if (pb_decode_from_bytes(mp->decoded.payload.bytes, mp->decoded.payload.size, &meshtastic_KiezboxMessage_msg,
-                                     &scratch)) {
-                decoded = &scratch;
-            } else if (shouldLog) {
-                LOG_ERROR("Error decoding protobuf for KiezboxControl message!\n");
             }
             break;
         }
