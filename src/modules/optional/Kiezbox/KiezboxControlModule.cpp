@@ -16,13 +16,17 @@ KiezboxControlModule::KiezboxControlModule()
                      &meshtastic_KiezboxMessage_msg),
       concurrency::OSThread("KiezboxControlModule"),
       kb_config(meshtastic_KiezboxMessage_Config_init_zero),
-      router_power_state(true)
+      router_power_state(true),
+      rtc_found(false)
 {
     // restrict to the gpio channel for rx
     boundChannel = KB_CHANNEL_NAME;
     loadConfig();
     // Generic peripherals, connected regardless of dev_type
-    rtc.begin();
+    rtc_found = rtc.begin();
+    if (!rtc_found) {
+        LOG_WARN("Kiezboxcontrol: no DS3231 RTC found, using the system time");
+    }
     // Core specific devices
     if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         LOG_DEBUG("INITIALIZE: Core module");
@@ -134,10 +138,12 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                 case meshtastic_KiezboxMessage_Control_unix_time_tag:
                     // Only accept time updates from local/serial connection
                     //TODO: check if it is a good idea to accept time updates fromt the LoRa mesh? (better than nothing?)
-                    if (!fromOthers) {
+                    if (fromOthers) {
+                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                    } else if (rtc_found) {
                         rtc.adjust(DateTime(c.set.unix_time));
                     } else {
-                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
+                        LOG_WARN("Kiezboxcontrol: no RTC to set the time on");
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_mode_tag:
@@ -230,7 +236,7 @@ int32_t KiezboxControlModule::runOnce()
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             r.has_update = true;
-            r.update.unix_time = rtc.now().unixtime();
+            r.update.unix_time = rtc_found ? rtc.now().unixtime() : getTime();
             r.update.has_meta = true;
             r.update.meta.has_box_id = true;
             r.update.meta.box_id = kb_config.box_id;
@@ -274,8 +280,10 @@ int32_t KiezboxControlModule::runOnce()
             r.update.core.has_router = true;
             r.update.core.router.powered = router_power_state;
             // RTC Time and Temperature
-            r.update.core.values.has_temp_rtc = true;
-            r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
+            if (rtc_found) {
+                r.update.core.values.has_temp_rtc = true;
+                r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
+            }
         }
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);
