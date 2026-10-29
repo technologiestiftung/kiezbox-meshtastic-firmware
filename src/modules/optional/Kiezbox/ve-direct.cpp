@@ -12,7 +12,7 @@ ve::VEDirect::VEDirect()
 
 void ve::VEDirect::debug(ve::VEMessage &vemessage)
 {
-    LOG_DEBUG("VEDirect debug M[ %s ] > R[ %s ]\n", vemessage.hex_command.c_str(),vemessage.hex_response.c_str());
+    LOG_DEBUG("VEDirect debug M[ %s ] > R[ %s ]", vemessage.hex_command.c_str(),vemessage.hex_response.c_str());
 }
 
 void ve::VEDirect::debug_next(ve::VEMessage &vemessage)
@@ -20,13 +20,13 @@ void ve::VEDirect::debug_next(ve::VEMessage &vemessage)
     if(receive_next(vemessage)) {
         debug(vemessage);
     } else {
-        LOG_DEBUG("VEDirect no valid message received!\n");
+        LOG_DEBUG("VEDirect no valid message received!");
     }
 }
 
 bool ve::VEDirect::receive_next(ve::VEMessage &vemessage)
 {
-    //LOG_DEBUG("VEDirect receive_next\n");
+    //LOG_DEBUG("VEDirect receive_next");
     vemessage.hex_response.clear();
     bool is_hex_command = false;
     int missed = 0;
@@ -58,11 +58,11 @@ bool ve::VEDirect::receive_next(ve::VEMessage &vemessage)
                 missed++;
                 continue;
             } else { // recieved garbage inside hex command
-                LOG_DEBUG("VEDirect error in hex command: %c / 0x%02X  missed: %d\n", received, received,missed);
+                LOG_DEBUG("VEDirect error in hex command: %c / 0x%02X  missed: %d", received, received,missed);
                 return false;
             }
         } else { // reset in case we recieve non hex
-            //LOG_DEBUG("VEDirect skipping char: %c / 0x%02X\n", received, received);
+            //LOG_DEBUG("VEDirect skipping char: %c / 0x%02X", received, received);
         }
     // we force read the first char and wait for full hex packet
     } while (ve_serial->available() > 0 || is_hex_command);
@@ -72,14 +72,14 @@ bool ve::VEDirect::receive_next(ve::VEMessage &vemessage)
 void ve::VEDirect::discard()
 {
     while (int bytes = ve_serial->available()) {
-        LOG_DEBUG("VEDirect discarding %d bytes\n", bytes);
+        LOG_DEBUG("VEDirect discarding %d bytes", bytes);
         for(int i = 0;i<bytes;i++) ve_serial->read();
     }
 }
 
 void ve::VEDirect::send(const std::string& message)
 {
-    LOG_DEBUG("VEMessage sending message: %s\n", message.c_str());
+    LOG_DEBUG("VEMessage sending message: %s", message.c_str());
     ve_serial->write(message.c_str(),message.length());
     ve_serial->write('\n');
 }
@@ -103,15 +103,15 @@ bool ve::VEDirect::receive_response(ve::VEMessage &vemessage) {
                 if(vemessage.resp_check()){
                     return true;
                 } else {
-                    LOG_DEBUG("VEDirect failed to check response match at attempt %d\n",i+1);
+                    LOG_DEBUG("VEDirect failed to check response match at attempt %d",i+1);
                     debug(vemessage);
                 }
             } else {
-                LOG_DEBUG("VEDirect failed to decode at attempt %d\n",i+1);
+                LOG_DEBUG("VEDirect failed to decode at attempt %d",i+1);
                 debug(vemessage);
             }
         } else {
-            LOG_DEBUG("VEDirect failed to recieve at attempt %d\n",i+1);
+            LOG_DEBUG("VEDirect failed to recieve at attempt %d",i+1);
             debug(vemessage);
         }
     }
@@ -233,15 +233,15 @@ bool ve::VEMessage::msg_decode(const std::string& msg) {
 bool ve::VEMessage::msg_decode() {
     //TODO: reset checksum?
     if(hex_response.size() < 2) {
-        LOG_DEBUG("VEDirect decode : command to short %d\n", hex_response.size());
+        LOG_DEBUG("VEDirect decode : command to short %d", hex_response.size());
         return false;
     }
     if (hex_response[0] != ':') {
-        LOG_DEBUG("VEDirect decocde: no ':'\n");
+        LOG_DEBUG("VEDirect decocde: no ':'");
         return false;
     }
     msg_decode_hex(response.code,1,1);
-    // LOG_DEBUG("VEDirect decocde: reponse %02X\n",(uint8_t)response.code);
+    // LOG_DEBUG("VEDirect decocde: reponse %02X",(uint8_t)response.code);
     switch(response.code) {
         case response::done:
             //TODO: response depends on command, so should parse that
@@ -261,13 +261,13 @@ bool ve::VEMessage::msg_decode() {
         case response::set:
         case response::async: { //TODO: how to handle async messages? like get/set, but different?
             if(hex_response.size() < 8) {
-                LOG_DEBUG("VEDirect decode : command to short %d\n", hex_response.size());
+                LOG_DEBUG("VEDirect decode : command to short %d", hex_response.size());
                 return false;
             }
             msg_decode_hex(response.id,2);
-            // LOG_DEBUG("VEDirect decocde: id %04X\n",(uint16_t)response.id);
+            // LOG_DEBUG("VEDirect decocde: id %04X",(uint16_t)response.id);
             msg_decode_hex(response.flags.byte,6);
-            // LOG_DEBUG("VEDirect decocde: flags %02X\n",(uint8_t)response.flags.byte);
+            // LOG_DEBUG("VEDirect decocde: flags %02X",(uint8_t)response.flags.byte);
             const id_metadata* meta = get_id_metadata(response.id);
             if (meta) {
                 bool ret = false;
@@ -297,7 +297,7 @@ bool ve::VEMessage::msg_decode() {
                     default:
                         return false;
                 }
-                // LOG_DEBUG("VEDirect decocde: value %08X\n",response.value.uint32_value);
+                // LOG_DEBUG("VEDirect decocde: value %08X",response.value.uint32_value);
                 return ret;
             } else {
                 return false;
@@ -313,7 +313,7 @@ bool ve::VEMessage::msg_decode() {
     return false;
 }
 void ve::VEMessage::resp_debug() {
-    LOG_DEBUG("debugging response of type 0x%05X\n",(uint8_t)response.code);
+    LOG_DEBUG("debugging response of type 0x%05X",(uint8_t)response.code);
     switch(response.code) {
         case response::done:
         case response::unknown:
@@ -327,22 +327,22 @@ void ve::VEMessage::resp_debug() {
             if (meta) {
                 switch(response.id) {
                     case id::battery_max_current:
-                        LOG_DEBUG("Battery max current is %f %s\n", response.value.uint16_value * meta->scale , meta->unit);
+                        LOG_DEBUG("Battery max current is %f %s", response.value.uint16_value * meta->scale , meta->unit);
                         break;
                     case id::battery_voltage:
-                        LOG_DEBUG("Battery voltage is %f %s\n", response.value.uint8_value * meta->scale , meta->unit);
+                        LOG_DEBUG("Battery voltage is %f %s", response.value.uint8_value * meta->scale , meta->unit);
                         break;
                     case id::charger_voltage:
-                        LOG_DEBUG("Charger voltage is %f %s\n", response.value.uint16_value * meta->scale , meta->unit);
+                        LOG_DEBUG("Charger voltage is %f %s", response.value.uint16_value * meta->scale , meta->unit);
                         break;
                     case id::charger_current:
-                        LOG_DEBUG("Charger current is %f %s\n", response.value.uint16_value * meta->scale , meta->unit);
+                        LOG_DEBUG("Charger current is %f %s", response.value.uint16_value * meta->scale , meta->unit);
                         break;
                     default:
-                        LOG_DEBUG("Unknown id 0x%04X\n", (uint16_t)response.id);
+                        LOG_DEBUG("Unknown id 0x%04X", (uint16_t)response.id);
                 }
             } else {
-                LOG_DEBUG("No metadata for id 0x%04X\n", (uint16_t)response.id);
+                LOG_DEBUG("No metadata for id 0x%04X", (uint16_t)response.id);
             }
             break;
         }

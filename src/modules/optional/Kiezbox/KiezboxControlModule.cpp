@@ -34,11 +34,11 @@ KiezboxControlModule::KiezboxControlModule()
     rtc.begin();
     // Core specific devices
     if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
-        LOG_DEBUG("INITIALIZE: Core module\n");
+        LOG_DEBUG("INITIALIZE: Core module");
         initCore();
     }
     if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
-        LOG_DEBUG("INITIALIZE: Sensor module\n");
+        LOG_DEBUG("INITIALIZE: Sensor module");
         initSensor();
     }
 }
@@ -59,7 +59,7 @@ void KiezboxControlModule::initCore() {
 void KiezboxControlModule::initSensor() {
     Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
     if (!bme680.begin()) {
-        LOG_DEBUG("Failed to initialize BME680\n");
+        LOG_DEBUG("Failed to initialize BME680");
     }
     // Set up oversampling and filter initialization
     // TODO: review parameter settings
@@ -71,10 +71,10 @@ void KiezboxControlModule::initSensor() {
 }
 
 void KiezboxControlModule::updateRouterPower() {
-    LOG_DEBUG("Current router power state is: %s\n", router_power_state ? "ON" : "OFF");
+    LOG_DEBUG("Current router power state is: %s", router_power_state ? "ON" : "OFF");
     if(router_power_state != kb_config.router_power) {
         router_power_state = kb_config.router_power;
-        LOG_DEBUG("New router power state is: %s\n", router_power_state ? "ON" : "OFF");
+        LOG_DEBUG("New router power state is: %s", router_power_state ? "ON" : "OFF");
     }
     setRouterPower(router_power_state);
 }
@@ -84,7 +84,7 @@ void KiezboxControlModule::setRouterPower(bool state) {
         digitalWrite(KB_POWER_PIN_RESET, state ? HIGH : LOW );
         digitalWrite(KB_POWER_PIN_SET, state ? LOW : HIGH );
     } else {
-        LOG_DEBUG("Rejected setting router power, as dev_type is not core! mode: %sd\n", kb_config.dev_type);
+        LOG_DEBUG("Rejected setting router power, as dev_type is not core! mode: %sd", kb_config.dev_type);
     }
 }
 
@@ -257,7 +257,7 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     }
                     break;
                 default:
-                    LOG_DEBUG("unhandled kiezbox control message of type %d\n",c.which_set);
+                    LOG_DEBUG("unhandled kiezbox control message of type %d",c.which_set);
                     return true;
             }
         }
@@ -272,8 +272,8 @@ int32_t KiezboxControlModule::runOnce()
     // TODO: maybe change this to be immediate on setting change?
     // Broadcast sensor values
     if (kb_config.enabled) {
-        LOG_DEBUG("Module enabled\n");
-        LOG_DEBUG("Operation mode: %d\n",kb_config.dev_type);
+        LOG_DEBUG("Module enabled");
+        LOG_DEBUG("Operation mode: %d",kb_config.dev_type);
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
              kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
@@ -337,10 +337,10 @@ int32_t KiezboxControlModule::runOnce()
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
             switch (sens_state) {
                 case sens_state_t::sds_bootup:
-                    LOG_DEBUG("Sensor bootup. nothing to do ...\n");
+                    LOG_DEBUG("Sensor bootup. nothing to do ...");
                     break;
                 case sens_state_t::sds_done:
-                    LOG_DEBUG("Wakeup sds sensor.\n");
+                    LOG_DEBUG("Wakeup sds sensor.");
                     sds.wakeup();
                     sens_state = sens_state_t::sds_warmup;
                     return 30000; //TODO: set from module config
@@ -358,9 +358,9 @@ int32_t KiezboxControlModule::runOnce()
                     r.update.sensor.values.part_pm10 = static_cast<int32_t>(pm.pm10 * 1000.0);
                     WorkingStateResult state = sds.sleep();
                     if (state.isWorking()) {
-                        LOG_DEBUG("sds sensor sleep failed.\n");
+                        LOG_DEBUG("sds sensor sleep failed.");
                     } else {
-                        LOG_DEBUG("sds sensor is sleeping now.\n");
+                        LOG_DEBUG("sds sensor is sleeping now.");
                     }
                     // RTC Time and Temperature
                     r.update.sensor.values.has_temp_rtc = true;
@@ -369,7 +369,7 @@ int32_t KiezboxControlModule::runOnce()
                     r.update.sensor.values.has_battery_voltage = true;
                     r.update.sensor.values.battery_voltage = static_cast<int32_t>(((analogReadMilliVolts(KB_BAT_PIN) * 1507)/1000));
                     if (!bme680.endReading()) {
-                        LOG_DEBUG("bme680 failed to read.\n");
+                        LOG_DEBUG("bme680 failed to read.");
                     } else {
                         r.update.sensor.values.has_temp_main = true;
                         r.update.sensor.values.temp_main = static_cast<int32_t>(bme680.temperature * 1000.0);
@@ -390,10 +390,10 @@ int32_t KiezboxControlModule::runOnce()
             meshtastic_Channel &sendChannel = channels.getByName(KB_CHANNEL_NAME);
             if ( strncmp(sendChannel.settings.name,KB_CHANNEL_NAME,12) == 0 ) {
                 p->channel = sendChannel.index;
-                LOG_DEBUG("Broadcasting Kiezbox Message (to channel %d)\n", p->channel);
+                LOG_DEBUG("Broadcasting Kiezbox Message (to channel %d)", p->channel);
                 service->sendToMesh(p, RX_SRC_LOCAL, true);
             } else {
-                LOG_DEBUG("There seems to be no channel named \"kiezbox\" (on index %d). skip sending.\n", p->channel);
+                LOG_DEBUG("There seems to be no channel named \"kiezbox\" (on index %d). skip sending.", p->channel);
                 service->releaseToPool(p);
             }
         }
