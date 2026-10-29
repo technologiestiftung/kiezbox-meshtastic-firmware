@@ -1,15 +1,21 @@
 #include "KiezboxControlModule.h"
+#if MESHTASTIC_INCLUDE_KIEZBOXCONTROL
+#include "FSCommon.h"
 #include "MeshService.h"
 #include "NodeDB.h"
 #include "RTC.h"
 #include "Router.h"
+#include "SPILock.h"
+#include "UptimeClock.h"
 #include "configuration.h"
 #include "main.h"
 #include "ve-direct.h"
 
 KiezboxControlModule::KiezboxControlModule()
-    : ProtobufModule("kiezboxcontrol", meshtastic_PortNum_KIEZBOX_CONTROL_APP, &meshtastic_KiezboxMessage_msg),
+    : ProtobufModule("kiezboxcontrol", static_cast<meshtastic_PortNum>(meshtastic_KiezboxMessage_PortNum_KIEZBOX_CONTROL_APP),
+                     &meshtastic_KiezboxMessage_msg),
       concurrency::OSThread("KiezboxControlModule"),
+      kb_config(meshtastic_KiezboxMessage_Config_init_zero),
       // dht has to be constructed here, but the KB_DHTPIN isn't actually used/initialized
       // until dht.begin() so it is fine to reuse
       dht(KB_DHTPIN, KB_DHTTYPE),
@@ -22,15 +28,16 @@ KiezboxControlModule::KiezboxControlModule()
       sds(Serial2)
 {
     // restrict to the gpio channel for rx
-    boundChannel = Channels::kiezboxChannel;
+    boundChannel = KB_CHANNEL_NAME;
+    loadConfig();
     // Generic peripherals, connected regardless of dev_type
     rtc.begin();
     // Core specific devices
-    if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
+    if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         LOG_DEBUG("INITIALIZE: Core module\n");
         initCore();
     }
-    if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
+    if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
         LOG_DEBUG("INITIALIZE: Sensor module\n");
         initSensor();
     }
@@ -65,27 +72,47 @@ void KiezboxControlModule::initSensor() {
 
 void KiezboxControlModule::updateRouterPower() {
     LOG_DEBUG("Current router power state is: %s\n", router_power_state ? "ON" : "OFF");
-    if(router_power_state != moduleConfig.kiezbox_control.router_power) {
-        router_power_state = moduleConfig.kiezbox_control.router_power;
+    if(router_power_state != kb_config.router_power) {
+        router_power_state = kb_config.router_power;
         LOG_DEBUG("New router power state is: %s\n", router_power_state ? "ON" : "OFF");
     }
     setRouterPower(router_power_state);
 }
 
 void KiezboxControlModule::setRouterPower(bool state) {
-    if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
+    if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         digitalWrite(KB_POWER_PIN_RESET, state ? HIGH : LOW );
         digitalWrite(KB_POWER_PIN_SET, state ? LOW : HIGH );
     } else {
-        LOG_DEBUG("Rejected setting router power, as dev_type is not core! mode: %sd\n", moduleConfig.kiezbox_control.dev_type);
+        LOG_DEBUG("Rejected setting router power, as dev_type is not core! mode: %sd\n", kb_config.dev_type);
     }
 }
 
 void KiezboxControlModule::reboot(int32_t seconds)
 {
     LOG_INFO("Reboot in %d seconds", seconds);
-    screen->startAlert("Rebooting...");
-    rebootAtMsec = (seconds < 0) ? 0 : (millis() + seconds * 1000);
+    if (screen)
+        screen->showSimpleBanner("Rebooting...", 0);
+    rebootAtMsec = (seconds < 0) ? 0 : Time::timerEndsAtMillis(seconds * 1000);
+}
+
+void KiezboxControlModule::loadConfig()
+{
+    if (nodeDB->loadProto(KB_CONFIG_FILE, meshtastic_KiezboxMessage_Config_size, sizeof(meshtastic_KiezboxMessage_Config),
+                          &meshtastic_KiezboxMessage_Config_msg, &kb_config) != LoadFileResult::LOAD_SUCCESS) {
+        kb_config = meshtastic_KiezboxMessage_Config_init_zero;
+    }
+}
+
+bool KiezboxControlModule::saveConfig()
+{
+#ifdef FSCom
+    spiLock->lock();
+    FSCom.mkdir(KB_CONFIG_DIR);
+    spiLock->unlock();
+#endif
+    return nodeDB->saveProto(KB_CONFIG_FILE, meshtastic_KiezboxMessage_Config_size, &meshtastic_KiezboxMessage_Config_msg,
+                             &kb_config);
 }
 
 bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *kb)
@@ -106,19 +133,19 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
         meshtastic_KiezboxMessage_Control &c = kb->control;
         meshtastic_KiezboxMessage_Meta &m = c.meta;
         bool affected = true;
-        if(m.has_dev_type && (m.dev_type != moduleConfig.kiezbox_control.dev_type)) {
+        if(m.has_dev_type && (m.dev_type != kb_config.dev_type)) {
             LOG_DEBUG("Kiezboxcontrol: dev_type does not match",c.which_set);
             affected = false;
         }
-        if(m.has_box_id && (m.box_id != moduleConfig.kiezbox_control.box_id)) {
+        if(m.has_box_id && (m.box_id != kb_config.box_id)) {
             LOG_DEBUG("Kiezboxcontrol: box_id does not match",c.which_set);
             affected = false;
         }
-        if(m.has_dist_id && (m.dist_id != moduleConfig.kiezbox_control.dist_id)) {
+        if(m.has_dist_id && (m.dist_id != kb_config.dist_id)) {
             LOG_DEBUG("Kiezboxcontrol: dist_id does not match",c.which_set);
             affected = false;
         }
-        if(m.has_sens_id && (m.sens_id != moduleConfig.kiezbox_control.sens_id)) {
+        if(m.has_sens_id && (m.sens_id != kb_config.sens_id)) {
             LOG_DEBUG("Kiezboxcontrol: sens_id does not match",c.which_set);
             affected = false;
         }
@@ -135,53 +162,53 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_mode_tag:
-                    moduleConfig.kiezbox_control.mode = c.set.mode;
-                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    kb_config.mode = c.set.mode;
+                    saveConfig();
                     break;
                 case meshtastic_KiezboxMessage_Control_router_power_tag:
-                    moduleConfig.kiezbox_control.router_power = c.set.router_power;
+                    kb_config.router_power = c.set.router_power;
                     // apply power update immediately
-                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    saveConfig();
                     updateRouterPower();
                     break;
                 case meshtastic_KiezboxMessage_Control_status_interval_tag:
-                    moduleConfig.kiezbox_control.status_interval = c.set.status_interval;
-                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    kb_config.status_interval = c.set.status_interval;
+                    saveConfig();
                     // will be applied at next runOnce loop
                     break;
                 case meshtastic_KiezboxMessage_Control_sds_warmup_time_tag:
-                    moduleConfig.kiezbox_control.sds_warmup_time = c.set.sds_warmup_time;
-                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    kb_config.sds_warmup_time = c.set.sds_warmup_time;
+                    saveConfig();
                     // will be applied at next runOnce loop
                     break;
                 case meshtastic_KiezboxMessage_Control_box_id_tag:
                     if (!fromOthers) {
-                        moduleConfig.kiezbox_control.box_id = c.set.box_id;
-                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        kb_config.box_id = c.set.box_id;
+                        saveConfig();
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_dist_id_tag:
                     if (!fromOthers) {
-                        moduleConfig.kiezbox_control.dist_id = c.set.dist_id;
-                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        kb_config.dist_id = c.set.dist_id;
+                        saveConfig();
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_sens_id_tag:
                     if (!fromOthers) {
-                        moduleConfig.kiezbox_control.sens_id = c.set.sens_id;
-                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        kb_config.sens_id = c.set.sens_id;
+                        saveConfig();
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_dev_type_tag:
                     if (!fromOthers) {
-                        moduleConfig.kiezbox_control.dev_type = c.set.dev_type;
-                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        kb_config.dev_type = c.set.dev_type;
+                        saveConfig();
                         // rebooting as device type changes requires proper initialization
                         reboot(3);
                     } else {
@@ -189,14 +216,14 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_enabled_tag:
-                    moduleConfig.kiezbox_control.enabled = c.set.enabled;
-                    service->reloadConfig(SEGMENT_MODULECONFIG);
+                    kb_config.enabled = c.set.enabled;
+                    saveConfig();
                     // will be applied at next runOnce loop
                     break;
                 case meshtastic_KiezboxMessage_Control_button_id_tag:
                     if (!fromOthers) {
-                        moduleConfig.kiezbox_control.button_id = c.set.button_id;
-                        service->reloadConfig(SEGMENT_MODULECONFIG);
+                        kb_config.button_id = c.set.button_id;
+                        saveConfig();
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
                     }
@@ -216,23 +243,23 @@ int32_t KiezboxControlModule::runOnce()
     // Update router power if it should be changed
     // TODO: maybe change this to be immediate on setting change?
     // Broadcast sensor values
-    if (moduleConfig.kiezbox_control.enabled) {
+    if (kb_config.enabled) {
         LOG_DEBUG("Module enabled\n");
-        LOG_DEBUG("Operation mode: %d\n",moduleConfig.kiezbox_control.dev_type);
+        LOG_DEBUG("Operation mode: %d\n",kb_config.dev_type);
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
-        if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
-             moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
+             kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
             r.has_update = true;
             r.update.unix_time = rtc.now().unixtime();
             r.update.has_meta = true;
             r.update.meta.has_box_id = true;
-            r.update.meta.box_id = moduleConfig.kiezbox_control.box_id;
+            r.update.meta.box_id = kb_config.box_id;
             r.update.meta.has_dist_id = true;
-            r.update.meta.dist_id = moduleConfig.kiezbox_control.dist_id;
+            r.update.meta.dist_id = kb_config.dist_id;
             r.update.meta.has_dev_type = true;
-            r.update.meta.dev_type = moduleConfig.kiezbox_control.dev_type;
+            r.update.meta.dev_type = kb_config.dev_type;
         }
-        if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             updateRouterPower();
             // Internal sensors
             r.update.has_core = true;
@@ -279,7 +306,7 @@ int32_t KiezboxControlModule::runOnce()
             r.update.core.values.has_temp_rtc = true;
             r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
         }
-        if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
             switch (sens_state) {
                 case sens_state_t::sds_bootup:
                     LOG_DEBUG("Sensor bootup. nothing to do ...\n");
@@ -294,7 +321,7 @@ int32_t KiezboxControlModule::runOnce()
                     bme680.beginReading();
                     PmResult pm = sds.queryPm();
                     r.update.meta.has_sens_id = true;
-                    r.update.meta.sens_id = moduleConfig.kiezbox_control.sens_id;
+                    r.update.meta.sens_id = kb_config.sens_id;
                     r.update.has_sensor = true;
                     r.update.sensor.has_values = true;
                     r.update.sensor.values.has_part_pm25 = true;
@@ -329,11 +356,11 @@ int32_t KiezboxControlModule::runOnce()
                     break;
             }
         }
-        if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
-             ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_done ) ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
+             ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_done ) ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);
-            meshtastic_Channel &sendChannel = channels.getByName(Channels::kiezboxChannel);
-            if ( strncmp(sendChannel.settings.name,Channels::kiezboxChannel,12) == 0 ) {
+            meshtastic_Channel &sendChannel = channels.getByName(KB_CHANNEL_NAME);
+            if ( strncmp(sendChannel.settings.name,KB_CHANNEL_NAME,12) == 0 ) {
                 p->channel = sendChannel.index;
                 LOG_DEBUG("Broadcasting Kiezbox Message (to channel %d)\n", p->channel);
                 service->sendToMesh(p, RX_SRC_LOCAL, true);
@@ -342,12 +369,12 @@ int32_t KiezboxControlModule::runOnce()
                 service->releaseToPool(p);
             }
         }
-        if ( moduleConfig.kiezbox_control.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_bootup ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_bootup ) {
             sens_state = sens_state_t::sds_done;
         }
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
     // TODO: maybe sync this with rtc somehow, to have all updates in sync? but this could also lead to more lora collisions?
-    return std::min(std::max(KB_STATUS_MIN,moduleConfig.kiezbox_control.status_interval),KB_STATUS_MAX);
+    return std::min<int32_t>(std::max<int32_t>(KB_STATUS_MIN, kb_config.status_interval), KB_STATUS_MAX);
 }
-
+#endif

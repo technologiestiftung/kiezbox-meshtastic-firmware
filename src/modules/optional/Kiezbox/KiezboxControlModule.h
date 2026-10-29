@@ -1,4 +1,6 @@
 #pragma once
+#include "configuration.h"
+#if MESHTASTIC_INCLUDE_KIEZBOXCONTROL
 #include "ProtobufModule.h"
 #include "concurrency/OSThread.h"
 #include "mesh/generated/meshtastic/kiezbox_control.pb.h"
@@ -20,6 +22,15 @@
 // BME 680
 #include <Adafruit_BME680.h>
 
+#ifndef KB_CHANNEL_NAME
+#define KB_CHANNEL_NAME "kiezbox"
+#endif
+// kept outside of /prefs, so a factory reset doesn't remove it
+#ifndef KB_CONFIG_DIR
+#define KB_CONFIG_DIR "/kiezbox"
+#endif
+#define KB_CONFIG_FILE KB_CONFIG_DIR "/config.proto"
+
 enum class sens_state_t {
     sds_bootup = 0,
     sds_done = 1,
@@ -27,10 +38,11 @@ enum class sens_state_t {
 };
 
 /**
- * A module that provides easy low-level remote access to device hardware.
+ * A module that reports kiezbox sensor values and controls the kiezbox hardware.
  */
 class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, private concurrency::OSThread
 {
+    meshtastic_KiezboxMessage_Config kb_config;
     DHT dht;
     OneWire onewire;
     DallasTemperature dallas;
@@ -70,6 +82,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     void initCore();
     void initSensor();
     void reboot(int32_t seconds);
+    void loadConfig();
+    bool saveConfig();
 };
 
 extern KiezboxControlModule kiezboxControlModule;
+#endif
