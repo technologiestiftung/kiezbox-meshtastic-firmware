@@ -47,6 +47,11 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     virtual bool handleReceivedProtobuf(const meshtastic_MeshPacket &mp, meshtastic_KiezboxMessage *p) override;
 
     /**
+     * Accepts packets on the kiezbox channel, and direct (PKI) messages from senders with an admin key.
+     */
+    virtual bool wantPacket(const meshtastic_MeshPacket *p) override;
+
+    /**
      * Periodically read the gpios we have been asked to WATCH, if they have changed,
      * broadcast a message with the change information.
      *
@@ -62,6 +67,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     void loadConfig();
     bool saveConfig();
     bool isTarget(const meshtastic_KiezboxMessage_Meta &m);
+    bool isAdminKey(const meshtastic_MeshPacket_public_key_t &key);
 };
 
 extern KiezboxControlModule kiezboxControlModule;

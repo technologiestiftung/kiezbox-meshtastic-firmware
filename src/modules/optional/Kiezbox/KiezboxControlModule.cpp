@@ -19,8 +19,6 @@ KiezboxControlModule::KiezboxControlModule()
       router_power_state(true),
       rtc_found(false)
 {
-    // restrict to the gpio channel for rx
-    boundChannel = KB_CHANNEL_NAME;
     loadConfig();
     // Generic peripherals, connected regardless of dev_type
     rtc_found = rtc.begin();
@@ -87,6 +85,28 @@ bool KiezboxControlModule::saveConfig()
 #endif
     return nodeDB->saveProto(KB_CONFIG_FILE, meshtastic_KiezboxMessage_Config_size, &meshtastic_KiezboxMessage_Config_msg,
                              &kb_config);
+}
+
+bool KiezboxControlModule::wantPacket(const meshtastic_MeshPacket *p)
+{
+    if (!ProtobufModule::wantPacket(p))
+        return false;
+    if (isFromUs(p))
+        return true;
+    // direct messages are encrypted with the node keys and arrive without the kiezbox channel
+    if (p->pki_encrypted)
+        return isAdminKey(p->public_key);
+    return strcasecmp(channels.getName(p->channel), KB_CHANNEL_NAME) == 0;
+}
+
+bool KiezboxControlModule::isAdminKey(const meshtastic_MeshPacket_public_key_t &key)
+{
+    for (const auto &admin : config.security.admin_key) {
+        if (admin.size == 32 && key.size == 32 && memcmp(admin.bytes, key.bytes, 32) == 0)
+            return true;
+    }
+    LOG_DEBUG("Kiezboxcontrol: ignoring direct message, sender key isn't an admin key");
+    return false;
 }
 
 bool KiezboxControlModule::isTarget(const meshtastic_KiezboxMessage_Meta &m)
