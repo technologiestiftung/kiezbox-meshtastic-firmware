@@ -16,8 +16,6 @@ KiezboxControlModule::KiezboxControlModule()
                      &meshtastic_KiezboxMessage_msg),
       concurrency::OSThread("KiezboxControlModule"),
       kb_config(meshtastic_KiezboxMessage_Config_init_zero),
-      onewire(),
-      dallas(),
       router_power_state(true)
 {
     // restrict to the gpio channel for rx
@@ -33,8 +31,6 @@ KiezboxControlModule::KiezboxControlModule()
 }
 
 void KiezboxControlModule::initCore() {
-    onewire.begin(KB_ONEWIRE_PIN);
-    dallas.setOneWire(&onewire);
     pinMode(KB_POWER_PIN_RESET,OUTPUT);
     pinMode(KB_POWER_PIN_SET,OUTPUT);
     //TODO: This fixes a small power break on ESP bootup, we should really find a better/permanent solution
@@ -247,10 +243,6 @@ int32_t KiezboxControlModule::runOnce()
             updateRouterPower();
             r.update.has_core = true;
             r.update.core.has_values = true;
-            // external sensors
-            dallas.requestTemperatures(); 
-            r.update.core.values.has_temp_out = true;
-            r.update.core.values.temp_out = static_cast<int32_t>(dallas.getTempCByIndex(0) * 1000.0);
             // mppt measurements
             if(vedirect.get_value(ve::id::panel_voltage ,r.update.core.values.solar_voltage)){
                 r.update.core.values.solar_voltage *= 10;

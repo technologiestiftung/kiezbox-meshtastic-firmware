@@ -41,7 +41,6 @@
 #define KB_STATUS_MIN 30000 // 30 Seconds
 #define KB_STATUS_MAX 3600000 // 1 Hour
 // Core specific definitions
-#define KB_ONEWIRE_PIN 5
 #define KB_POWER_PIN_RESET 34
 #define KB_POWER_PIN_SET 33
 #define KB_VED_RXPIN 18

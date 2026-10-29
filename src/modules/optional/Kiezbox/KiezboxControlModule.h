@@ -5,10 +5,6 @@
 #include "concurrency/OSThread.h"
 #include "mesh/generated/meshtastic/kiezbox_control.pb.h"
 
-// Sensor stuff
-#include <OneWire.h>
-#include <DallasTemperature.h>
-
 // MPPT
 #include "ve-direct.h"
 
@@ -30,8 +26,6 @@
 class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, private concurrency::OSThread
 {
     meshtastic_KiezboxMessage_Config kb_config;
-    OneWire onewire;
-    DallasTemperature dallas;
     bool router_power_state;
     ve::VEDirect vedirect;
     // NOTE: RTClib uses the default i2c from the Wire library.
