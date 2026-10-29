@@ -48,11 +48,6 @@
 #define KB_VED_TXPIN 17
 #define KB_VED_BAUD 19200
 #define KB_VED_BUFFER_SIZE 128
-// Sensor specific definitions
-#define KB_DUST_BAUD 9600
-#define KB_DUST_RXPIN 48
-#define KB_DUST_TXPIN 47
-#define KB_BAT_PIN 2
 
 // TODO: evaluate excludes for size, speed and stability
 #define MESHTASTIC_EXCLUDE_GPS 1

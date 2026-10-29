@@ -18,11 +18,7 @@ KiezboxControlModule::KiezboxControlModule()
       kb_config(meshtastic_KiezboxMessage_Config_init_zero),
       onewire(),
       dallas(),
-      router_power_state(true),
-      sens_state(sens_state_t::sds_bootup),
-      // sds has to be constructed here, but Serial2 isn't actually used/initialized
-      // until initSernsor() is called so KB_DUST_RXPIN and KB_DUST_TXPIN are fine to reuse
-      sds(Serial2)
+      router_power_state(true)
 {
     // restrict to the gpio channel for rx
     boundChannel = KB_CHANNEL_NAME;
@@ -33,10 +29,6 @@ KiezboxControlModule::KiezboxControlModule()
     if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
         LOG_DEBUG("INITIALIZE: Core module");
         initCore();
-    }
-    if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
-        LOG_DEBUG("INITIALIZE: Sensor module");
-        initSensor();
     }
 }
 
@@ -50,20 +42,6 @@ void KiezboxControlModule::initCore() {
     digitalWrite(KB_POWER_PIN_SET, HIGH);
     // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
     updateRouterPower();
-}
-
-void KiezboxControlModule::initSensor() {
-    Serial2.begin(KB_DUST_BAUD, SERIAL_8N1, KB_DUST_RXPIN, KB_DUST_TXPIN);
-    if (!bme680.begin()) {
-        LOG_DEBUG("Failed to initialize BME680");
-    }
-    // Set up oversampling and filter initialization
-    // TODO: review parameter settings
-    bme680.setTemperatureOversampling(BME680_OS_8X);
-    bme680.setHumidityOversampling(BME680_OS_2X);
-    bme680.setPressureOversampling(BME680_OS_4X);
-    bme680.setIIRFilterSize(BME680_FILTER_SIZE_3);
-    bme680.setGasHeater(320, 150); // 320*C for 150 ms
 }
 
 void KiezboxControlModule::updateRouterPower() {
@@ -125,10 +103,6 @@ bool KiezboxControlModule::isTarget(const meshtastic_KiezboxMessage_Meta &m)
         LOG_DEBUG("Kiezboxcontrol: dist_id does not match");
         return false;
     }
-    if (m.has_sens_id && (m.sens_id != kb_config.sens_id)) {
-        LOG_DEBUG("Kiezboxcontrol: sens_id does not match");
-        return false;
-    }
     return true;
 }
 
@@ -185,11 +159,6 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     saveConfig();
                     // will be applied at next runOnce loop
                     break;
-                case meshtastic_KiezboxMessage_Control_sds_warmup_time_tag:
-                    kb_config.sds_warmup_time = c.set.sds_warmup_time;
-                    saveConfig();
-                    // will be applied at next runOnce loop
-                    break;
                 case meshtastic_KiezboxMessage_Control_box_id_tag:
                     if (!fromOthers) {
                         kb_config.box_id = c.set.box_id;
@@ -201,14 +170,6 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                 case meshtastic_KiezboxMessage_Control_dist_id_tag:
                     if (!fromOthers) {
                         kb_config.dist_id = c.set.dist_id;
-                        saveConfig();
-                    } else {
-                        LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
-                    }
-                    break;
-                case meshtastic_KiezboxMessage_Control_sens_id_tag:
-                    if (!fromOthers) {
-                        kb_config.sens_id = c.set.sens_id;
                         saveConfig();
                     } else {
                         LOG_DEBUG("Kiezboxcontrol: ignoring remote update of type %d",c.which_set);
@@ -271,8 +232,7 @@ int32_t KiezboxControlModule::runOnce()
         LOG_DEBUG("Module enabled");
         LOG_DEBUG("Operation mode: %d",kb_config.dev_type);
         meshtastic_KiezboxMessage r = meshtastic_KiezboxMessage_init_default;
-        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
-             kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             r.has_update = true;
             r.update.unix_time = rtc.now().unixtime();
             r.update.has_meta = true;
@@ -325,58 +285,7 @@ int32_t KiezboxControlModule::runOnce()
             r.update.core.values.has_temp_rtc = true;
             r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
         }
-        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor ) {
-            switch (sens_state) {
-                case sens_state_t::sds_bootup:
-                    LOG_DEBUG("Sensor bootup. nothing to do ...");
-                    break;
-                case sens_state_t::sds_done:
-                    LOG_DEBUG("Wakeup sds sensor.");
-                    sds.wakeup();
-                    sens_state = sens_state_t::sds_warmup;
-                    return 30000; //TODO: set from module config
-                    break;
-                case sens_state_t::sds_warmup:
-                    bme680.beginReading();
-                    PmResult pm = sds.queryPm();
-                    r.update.meta.has_sens_id = true;
-                    r.update.meta.sens_id = kb_config.sens_id;
-                    r.update.has_sensor = true;
-                    r.update.sensor.has_values = true;
-                    r.update.sensor.values.has_part_pm25 = true;
-                    r.update.sensor.values.part_pm25 = static_cast<int32_t>(pm.pm25 * 1000.0);
-                    r.update.sensor.values.has_part_pm10 = true;
-                    r.update.sensor.values.part_pm10 = static_cast<int32_t>(pm.pm10 * 1000.0);
-                    WorkingStateResult state = sds.sleep();
-                    if (state.isWorking()) {
-                        LOG_DEBUG("sds sensor sleep failed.");
-                    } else {
-                        LOG_DEBUG("sds sensor is sleeping now.");
-                    }
-                    // RTC Time and Temperature
-                    r.update.sensor.values.has_temp_rtc = true;
-                    r.update.sensor.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
-                    // Battery voltage
-                    r.update.sensor.values.has_battery_voltage = true;
-                    r.update.sensor.values.battery_voltage = static_cast<int32_t>(((analogReadMilliVolts(KB_BAT_PIN) * 1507)/1000));
-                    if (!bme680.endReading()) {
-                        LOG_DEBUG("bme680 failed to read.");
-                    } else {
-                        r.update.sensor.values.has_temp_main = true;
-                        r.update.sensor.values.temp_main = static_cast<int32_t>(bme680.temperature * 1000.0);
-                        r.update.sensor.values.has_humid_main = true;
-                        r.update.sensor.values.humid_main = static_cast<int32_t>(bme680.humidity * 1000.0);
-                        r.update.sensor.values.has_pressure = true;
-                        r.update.sensor.values.pressure = static_cast<int32_t>(bme680.pressure * 10.0);
-                        r.update.sensor.values.has_air_quality = true;
-                        r.update.sensor.values.air_quality = static_cast<int32_t>(bme680.gas_resistance * 1.0);
-                    }
-                    sens_state = sens_state_t::sds_done;
-                    break;
-            }
-        }
-        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ||
-             ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_done ) ) {
+        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);
             meshtastic_Channel &sendChannel = channels.getByName(KB_CHANNEL_NAME);
             if ( strncmp(sendChannel.settings.name,KB_CHANNEL_NAME,12) == 0 ) {
@@ -387,9 +296,6 @@ int32_t KiezboxControlModule::runOnce()
                 LOG_DEBUG("There seems to be no channel named \"kiezbox\" (on index %d). skip sending.", p->channel);
                 service->releaseToPool(p);
             }
-        }
-        if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_sensor && sens_state == sens_state_t::sds_bootup ) {
-            sens_state = sens_state_t::sds_done;
         }
     }
     // Wait before next status update use KB_STATUS_MIN as default and capped by KB_STATUS_MAX
