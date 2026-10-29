@@ -1,0 +1,5 @@
+config:
+  bluetooth:
+    mode: RANDOM_PIN
+    fixedPin: 231337
+    enabled: false

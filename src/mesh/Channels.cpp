@@ -21,6 +21,7 @@ const char *Channels::serialChannel = "serial";
 #if !MESHTASTIC_EXCLUDE_MQTT
 const char *Channels::mqttChannel = "mqtt";
 #endif
+const char *Channels::kiezboxChannel = "kiezbox";
 
 meshtastic_Channel dummyChannel = {.index = -1};
 
