@@ -110,7 +110,7 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
 {
     if (kb == NULL) {
         LOG_DEBUG("Kiezboxcontrol: no kiezbox message to handle");
-        return true;
+        return false;
     } else {
         LOG_DEBUG("Kiezboxcontrol: handling kiezbox message");
     }
@@ -217,12 +217,12 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     break;
                 default:
                     LOG_DEBUG("unhandled kiezbox control message of type %d",c.which_set);
-                    return true;
+                    break;
             }
         }
     }
-    // we handled the kiezbox messages successfully, so we stop message parsing by returning true
-    return true;
+    // let the following modules run, so the message is still forwarded to the client
+    return false;
 }
 
 int32_t KiezboxControlModule::runOnce()
