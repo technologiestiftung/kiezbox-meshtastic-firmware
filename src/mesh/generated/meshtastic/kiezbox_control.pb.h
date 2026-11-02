@@ -158,6 +158,15 @@ typedef struct _meshtastic_KiezboxMessage_CoreValues {
     /* Temperature of the realtime clock (C) */
     bool has_temp_rtc;
     int32_t temp_rtc;
+    /* Temperature inside the box (C) */
+    bool has_temp_in;
+    int32_t temp_in;
+    /* Relative humidity inside the box (%) */
+    bool has_humid_in;
+    int32_t humid_in;
+    /* Barometric pressure (hPa) */
+    bool has_pressure;
+    int32_t pressure;
 } meshtastic_KiezboxMessage_CoreValues;
 
 /* Contains general router status and internal sensor values */
@@ -264,7 +273,7 @@ extern "C" {
 #define meshtastic_KiezboxMessage_Update_init_default {false, meshtastic_KiezboxMessage_Meta_init_default, 0, false, meshtastic_KiezboxMessage_Core_init_default, false, 0}
 #define meshtastic_KiezboxMessage_Core_init_default {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_default, false, meshtastic_KiezboxMessage_CoreValues_init_default}
 #define meshtastic_KiezboxMessage_Router_init_default {0, false, "", false, ""}
-#define meshtastic_KiezboxMessage_CoreValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_CoreValues_init_default {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Emergency_init_default {_meshtastic_KiezboxMessage_EmergencyType_MIN, 0, 0, false, ""}
 #define meshtastic_KiezboxMessage_init_zero      {false, meshtastic_KiezboxMessage_Update_init_zero, false, meshtastic_KiezboxMessage_Control_init_zero, false, meshtastic_KiezboxMessage_Emergency_init_zero, false, meshtastic_KiezboxMessage_Request_init_zero, false, meshtastic_KiezboxMessage_Config_init_zero}
 #define meshtastic_KiezboxMessage_Meta_init_zero {false, 0, false, 0, false, _meshtastic_KiezboxMessage_DeviceType_MIN}
@@ -274,7 +283,7 @@ extern "C" {
 #define meshtastic_KiezboxMessage_Update_init_zero {false, meshtastic_KiezboxMessage_Meta_init_zero, 0, false, meshtastic_KiezboxMessage_Core_init_zero, false, 0}
 #define meshtastic_KiezboxMessage_Core_init_zero {_meshtastic_KiezboxMessage_Mode_MIN, false, meshtastic_KiezboxMessage_Router_init_zero, false, meshtastic_KiezboxMessage_CoreValues_init_zero}
 #define meshtastic_KiezboxMessage_Router_init_zero {0, false, "", false, ""}
-#define meshtastic_KiezboxMessage_CoreValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
+#define meshtastic_KiezboxMessage_CoreValues_init_zero {false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0, false, 0}
 #define meshtastic_KiezboxMessage_Emergency_init_zero {_meshtastic_KiezboxMessage_EmergencyType_MIN, 0, 0, false, ""}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -312,6 +321,9 @@ extern "C" {
 #define meshtastic_KiezboxMessage_CoreValues_battery_voltage_tag 8
 #define meshtastic_KiezboxMessage_CoreValues_battery_current_tag 9
 #define meshtastic_KiezboxMessage_CoreValues_temp_rtc_tag 10
+#define meshtastic_KiezboxMessage_CoreValues_temp_in_tag 11
+#define meshtastic_KiezboxMessage_CoreValues_humid_in_tag 12
+#define meshtastic_KiezboxMessage_CoreValues_pressure_tag 13
 #define meshtastic_KiezboxMessage_Core_mode_tag  1
 #define meshtastic_KiezboxMessage_Core_router_tag 2
 #define meshtastic_KiezboxMessage_Core_values_tag 3
@@ -420,7 +432,10 @@ X(a, STATIC,   OPTIONAL, INT32,    solar_energy_day,   6) \
 X(a, STATIC,   OPTIONAL, INT32,    solar_energy_total,   7) \
 X(a, STATIC,   OPTIONAL, INT32,    battery_voltage,   8) \
 X(a, STATIC,   OPTIONAL, INT32,    battery_current,   9) \
-X(a, STATIC,   OPTIONAL, INT32,    temp_rtc,         10)
+X(a, STATIC,   OPTIONAL, INT32,    temp_rtc,         10) \
+X(a, STATIC,   OPTIONAL, INT32,    temp_in,          11) \
+X(a, STATIC,   OPTIONAL, INT32,    humid_in,         12) \
+X(a, STATIC,   OPTIONAL, INT32,    pressure,         13)
 #define meshtastic_KiezboxMessage_CoreValues_CALLBACK NULL
 #define meshtastic_KiezboxMessage_CoreValues_DEFAULT NULL
 
@@ -459,14 +474,14 @@ extern const pb_msgdesc_t meshtastic_KiezboxMessage_Emergency_msg;
 #define MESHTASTIC_MESHTASTIC_KIEZBOX_CONTROL_PB_H_MAX_SIZE meshtastic_KiezboxMessage_size
 #define meshtastic_KiezboxMessage_Config_size    52
 #define meshtastic_KiezboxMessage_Control_size   70
-#define meshtastic_KiezboxMessage_CoreValues_size 77
-#define meshtastic_KiezboxMessage_Core_size      151
+#define meshtastic_KiezboxMessage_CoreValues_size 110
+#define meshtastic_KiezboxMessage_Core_size      184
 #define meshtastic_KiezboxMessage_Emergency_size 89
 #define meshtastic_KiezboxMessage_Meta_size      14
 #define meshtastic_KiezboxMessage_Request_size   18
 #define meshtastic_KiezboxMessage_Router_size    68
-#define meshtastic_KiezboxMessage_Update_size    192
-#define meshtastic_KiezboxMessage_size           432
+#define meshtastic_KiezboxMessage_Update_size    225
+#define meshtastic_KiezboxMessage_size           465
 
 #ifdef __cplusplus
 } /* extern "C" */
