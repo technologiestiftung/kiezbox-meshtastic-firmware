@@ -10,6 +10,43 @@
 #include "configuration.h"
 #include "main.h"
 #include "ve-direct.h"
+#include <cmath>
+
+// The climate sensors are read with the upstream telemetry drivers
+#if !MESHTASTIC_EXCLUDE_ENVIRONMENTAL_SENSOR && __has_include(<Adafruit_BME280.h>)
+#define KB_HAS_CLIMATE_SENSORS 1
+#include "detect/ScanI2CTwoWire.h"
+#include "modules/Telemetry/Sensor/BME280Sensor.h"
+#include "modules/Telemetry/Sensor/TelemetrySensor.h"
+#include <Wire.h>
+#include <forward_list>
+
+namespace
+{
+std::forward_list<TelemetrySensor *> climateSensors;
+
+template <typename T> void addClimateSensor(const ScanI2C *i2cScanner, ScanI2C::DeviceType type)
+{
+    ScanI2C::FoundDevice dev = i2cScanner->find(type);
+    if (dev.type == ScanI2C::DeviceType::NONE) {
+        return;
+    }
+#if WIRE_INTERFACES_COUNT > 1
+    TwoWire *bus = ScanI2CTwoWire::fetchI2CBus(dev.address);
+#else
+    TwoWire *bus = &Wire;
+#endif
+    TelemetrySensor *sensor = new T();
+    if (sensor->initDevice(bus, &dev)) {
+        climateSensors.push_front(sensor);
+    } else {
+        delete sensor;
+    }
+}
+} // namespace
+#else
+#define KB_HAS_CLIMATE_SENSORS 0
+#endif
 
 KiezboxControlModule::KiezboxControlModule()
     : ProtobufModule("kiezboxcontrol", static_cast<meshtastic_PortNum>(meshtastic_KiezboxMessage_PortNum_KIEZBOX_CONTROL_APP),
@@ -40,6 +77,54 @@ void KiezboxControlModule::initCore() {
     digitalWrite(KB_POWER_PIN_SET, HIGH);
     // TODO: check if forcing initial low is a good idea? But should be fine, as KiezboxControlModule constructor is only called once
     updateRouterPower();
+}
+
+void KiezboxControlModule::i2cScanFinished(ScanI2C *i2cScanner)
+{
+#if KB_HAS_CLIMATE_SENSORS
+    if (moduleConfig.telemetry.environment_measurement_enabled) {
+        LOG_WARN("Kiezboxcontrol: environment telemetry is enabled, it reads the same sensors as this module");
+    }
+    addClimateSensor<BME280Sensor>(i2cScanner, ScanI2C::DeviceType::BME_280);
+    if (climateSensors.empty()) {
+        LOG_INFO("Kiezboxcontrol: no climate sensor found");
+    }
+#endif
+}
+
+void KiezboxControlModule::readClimate(meshtastic_KiezboxMessage_CoreValues &values)
+{
+#if KB_HAS_CLIMATE_SENSORS
+    if (climateSensors.empty()) {
+        return;
+    }
+    meshtastic_Telemetry t = meshtastic_Telemetry_init_zero;
+    t.which_variant = meshtastic_Telemetry_environment_metrics_tag;
+    bool valid = false;
+    for (TelemetrySensor *sensor : climateSensors) {
+        // evaluate getMetrics() for every sensor, even after the first valid one
+        bool sensorValid = sensor->getMetrics(&t);
+        valid = valid || sensorValid;
+    }
+    if (!valid) {
+        LOG_WARN("Kiezboxcontrol: failed to read the climate sensors");
+        return;
+    }
+    // scaled by 1000 like the other values, the gateway divides by 1000 again
+    const meshtastic_EnvironmentMetrics &e = t.variant.environment_metrics;
+    if (e.has_temperature) {
+        values.has_temp_in = true;
+        values.temp_in = static_cast<int32_t>(lroundf(e.temperature * 1000.0f));
+    }
+    if (e.has_relative_humidity) {
+        values.has_humid_in = true;
+        values.humid_in = static_cast<int32_t>(lroundf(e.relative_humidity * 1000.0f));
+    }
+    if (e.has_barometric_pressure) {
+        values.has_pressure = true;
+        values.pressure = static_cast<int32_t>(lroundf(e.barometric_pressure * 1000.0f));
+    }
+#endif
 }
 
 void KiezboxControlModule::updateRouterPower() {
@@ -304,6 +389,8 @@ int32_t KiezboxControlModule::runOnce()
                 r.update.core.values.has_temp_rtc = true;
                 r.update.core.values.temp_rtc = static_cast<int32_t>(rtc.getTemperature() * 1000.0);
             }
+            // Temperature, humidity and pressure inside the box
+            readClimate(r.update.core.values);
         }
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);

@@ -3,6 +3,7 @@
 #if MESHTASTIC_INCLUDE_KIEZBOXCONTROL
 #include "ProtobufModule.h"
 #include "concurrency/OSThread.h"
+#include "detect/ScanI2CConsumer.h"
 #include "mesh/generated/meshtastic/kiezbox_control.pb.h"
 
 // MPPT
@@ -23,7 +24,9 @@
 /**
  * A module that reports kiezbox sensor values and controls the kiezbox hardware.
  */
-class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, private concurrency::OSThread
+class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>,
+                             public ScanI2CConsumer,
+                             private concurrency::OSThread
 {
     meshtastic_KiezboxMessage_Config kb_config;
     bool router_power_state;
@@ -38,6 +41,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
      * name is for debugging output
      */
     KiezboxControlModule();
+
+    /** Sets up the climate sensors found by the I2C scan, using the upstream telemetry sensor drivers. */
+    void i2cScanFinished(ScanI2C *i2cScanner) override;
 
   protected:
     /** Called to handle a particular incoming message
@@ -63,6 +69,7 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>, p
     void updateRouterPower();
     void setRouterPower(bool state);
     void initCore();
+    void readClimate(meshtastic_KiezboxMessage_CoreValues &values);
     void reboot(int32_t seconds);
     void loadConfig();
     bool saveConfig();
