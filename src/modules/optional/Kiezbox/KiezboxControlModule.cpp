@@ -248,7 +248,10 @@ bool KiezboxControlModule::handleReceivedProtobuf(const meshtastic_MeshPacket &m
                     } else if (rtc_found) {
                         rtc.adjust(DateTime(c.set.unix_time));
                     } else {
-                        LOG_WARN("Kiezboxcontrol: no RTC to set the time on");
+                        struct timeval tv = {.tv_sec = static_cast<time_t>(c.set.unix_time), .tv_usec = 0};
+                        if (perhapsSetRTC(RTCQualityNTP, &tv, true) != RTCSetResultSuccess) {
+                            LOG_WARN("Kiezboxcontrol: can't set the system time");
+                        }
                     }
                     break;
                 case meshtastic_KiezboxMessage_Control_mode_tag:
