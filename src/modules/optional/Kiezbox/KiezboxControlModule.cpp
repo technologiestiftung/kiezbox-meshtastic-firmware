@@ -356,6 +356,7 @@ int32_t KiezboxControlModule::runOnce()
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             updateRouterPower();
             r.update.has_core = true;
+            r.update.core.mode = kb_config.mode;
             r.update.core.has_values = true;
             // mppt measurements
             if(vedirect.get_value(ve::id::panel_voltage ,r.update.core.values.solar_voltage)){
