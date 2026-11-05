@@ -127,6 +127,32 @@ void KiezboxControlModule::readClimate(meshtastic_KiezboxMessage_CoreValues &val
 #endif
 }
 
+#ifdef KB_MOCK_VALUES
+// Test builds for a bare board: fills every value no sensor delivered with a made-up one that
+// changes over time, so the whole chain to the database can be tested without the box hardware.
+void KiezboxControlModule::mockValues(meshtastic_KiezboxMessage_CoreValues &values)
+{
+    const int32_t t = static_cast<int32_t>(millis() / 1000 % 600);
+
+#define KB_MOCK(field, value)                                                                                                    \
+    if (!values.has_##field) {                                                                                                   \
+        values.has_##field = true;                                                                                               \
+        values.field = (value);                                                                                                  \
+    }
+    KB_MOCK(solar_voltage, 18000 + t * 10)
+    KB_MOCK(solar_power, 40000 + t * 50)
+    KB_MOCK(solar_energy_day, 120000 + t * 100)
+    KB_MOCK(solar_energy_total, 9870000)
+    KB_MOCK(battery_voltage, 12600 + t)
+    KB_MOCK(battery_current, 1500 - t)
+    KB_MOCK(temp_rtc, 21000 + t * 5)
+    KB_MOCK(temp_in, 23000 + t * 5)
+    KB_MOCK(humid_in, 45000 + t * 10)
+    KB_MOCK(pressure, 1013000 - t * 10)
+#undef KB_MOCK
+}
+#endif
+
 void KiezboxControlModule::updateRouterPower() {
     LOG_DEBUG("Current router power state is: %s", router_power_state ? "ON" : "OFF");
     if(router_power_state != kb_config.router_power) {
@@ -395,6 +421,9 @@ int32_t KiezboxControlModule::runOnce()
             }
             // Temperature, humidity and pressure inside the box
             readClimate(r.update.core.values);
+#ifdef KB_MOCK_VALUES
+            mockValues(r.update.core.values);
+#endif
         }
         if ( kb_config.dev_type == meshtastic_KiezboxMessage_DeviceType_core ) {
             meshtastic_MeshPacket *p = allocDataProtobuf(r);

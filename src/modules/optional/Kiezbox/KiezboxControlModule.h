@@ -70,6 +70,9 @@ class KiezboxControlModule : public ProtobufModule<meshtastic_KiezboxMessage>,
     void setRouterPower(bool state);
     void initCore();
     void readClimate(meshtastic_KiezboxMessage_CoreValues &values);
+#ifdef KB_MOCK_VALUES
+    void mockValues(meshtastic_KiezboxMessage_CoreValues &values);
+#endif
     void reboot(int32_t seconds);
     void loadConfig();
     bool saveConfig();
