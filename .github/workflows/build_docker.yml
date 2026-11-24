@@ -30,7 +30,7 @@ jobs:
 
       - name: Docker setup
         if: ${{ github.event_name != 'pull_request_target' && github.event_name != 'pull_request' }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Docker build and push tagged versions
         if: ${{ github.event_name == 'workflow_dispatch' }}
